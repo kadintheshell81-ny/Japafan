@@ -169,7 +169,7 @@
                 <div class="dz-placeholder">Drag & drop or click "Rank Anime" below</div>
               </div>
               <div class="tier-notes">
-                <input type="text" class="tier-note-input" data-rank="1" placeholder="Why is this your absolute #1? (e.g. Masterpiece narrative, soundtrack)">
+                <input type="text" class="tier-note-input" data-rank="1" maxlength="150" placeholder="Why is this your absolute #1? (e.g. Masterpiece narrative, soundtrack)">
               </div>
             </div>
             
@@ -180,7 +180,7 @@
                 <div class="dz-placeholder">Drag & drop or click "Rank Anime" below</div>
               </div>
               <div class="tier-notes">
-                <input type="text" class="tier-note-input" data-rank="2" placeholder="What makes this rank 2?">
+                <input type="text" class="tier-note-input" data-rank="2" maxlength="150" placeholder="What makes this rank 2?">
               </div>
             </div>
 
@@ -191,7 +191,7 @@
                 <div class="dz-placeholder">Drag & drop or click "Rank Anime" below</div>
               </div>
               <div class="tier-notes">
-                <input type="text" class="tier-note-input" data-rank="3" placeholder="What parts blew you away?">
+                <input type="text" class="tier-note-input" data-rank="3" maxlength="150" placeholder="What parts blew you away?">
               </div>
             </div>
 
@@ -202,7 +202,7 @@
                 <div class="dz-placeholder">Drag & drop or click "Rank Anime" below</div>
               </div>
               <div class="tier-notes">
-                <input type="text" class="tier-note-input" data-rank="4" placeholder="An unforgettable watch">
+                <input type="text" class="tier-note-input" data-rank="4" maxlength="150" placeholder="An unforgettable watch">
               </div>
             </div>
 
@@ -213,7 +213,7 @@
                 <div class="dz-placeholder">Drag & drop or click "Rank Anime" below</div>
               </div>
               <div class="tier-notes">
-                <input type="text" class="tier-note-input" data-rank="5" placeholder="Highly recommended to everyone">
+                <input type="text" class="tier-note-input" data-rank="5" maxlength="150" placeholder="Highly recommended to everyone">
               </div>
             </div>
           </div>
@@ -224,7 +224,7 @@
             <p>Search anime to load into your quick rack. Drag them onto your Tier list or click the rank buttons directly.</p>
             
             <div class="inventory-search-box">
-              <input type="text" id="inventory-search-input" placeholder="Search anime to list here...">
+              <input type="text" id="inventory-search-input" maxlength="100" placeholder="Search anime to list here...">
               <div class="inventory-dropdown" id="inventory-search-dropdown"></div>
             </div>
 
@@ -383,7 +383,7 @@
 
             <!-- Message Inputs -->
             <form class="chat-input-form" id="chat-message-form" autocomplete="off">
-              <input type="text" id="chat-message-input" placeholder="Say something about anime... (Try typing 'anyone like Death Note?' or 'thoughts on Naruto?')" required>
+              <input type="text" id="chat-message-input" maxlength="300" placeholder="Say something about anime... (Try typing 'anyone like Death Note?' or 'thoughts on Naruto?')" required>
               <button type="submit" class="chat-send-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="22" y1="2" x2="11" y2="13"></line>

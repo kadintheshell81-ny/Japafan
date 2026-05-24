@@ -1,29 +1,44 @@
-name: Build & Deploy Japafan
+name: Japafan CI — Build & Verify
 
 on:
   push:
     branches:
       - main
+      - develop
   pull_request:
     branches:
       - main
 
 jobs:
-  build-deploy:
-    name: Build & Validate Assets
+  build:
+    name: Build & Validate Production Bundle
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'npm'
 
-      - name: Install Project Dependencies
-        run: npm install
+      - name: Install Dependencies (clean install)
+        run: npm ci
 
-      - name: Compile and Build Bundle
+      - name: Build Production Bundle
         run: npm run build
+        env:
+          # Supabase credentials injected at build time via GitHub Secrets.
+          # Set these in: GitHub → Repository → Settings → Secrets → Actions
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Verify Build Output
+        run: |
+          echo "=== Build output contents ==="
+          ls -la dist/
+          echo "=== Checking index.html exists ==="
+          test -f dist/index.html && echo "✓ index.html found" || (echo "✗ index.html MISSING" && exit 1)
+          echo "=== Build verification passed ✓ ==="

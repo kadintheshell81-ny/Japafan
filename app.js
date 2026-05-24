@@ -5,7 +5,36 @@ import { supabaseService } from './supabase-client.js';
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  
+
+  // ==========================================================================
+  // 0. SECURITY & UTILITY HELPERS
+  // ==========================================================================
+
+  /**
+   * safeText — Sets an element's text content safely, preventing XSS.
+   * NEVER use innerHTML with user-controlled data. Use this instead.
+   * @param {HTMLElement} el
+   * @param {string} text
+   */
+  function safeText(el, text) {
+    el.textContent = String(text ?? '');
+    return el;
+  }
+
+  /**
+   * debounce — Limits how often a function fires.
+   * Used to throttle Jikan API search calls to prevent HTTP 429 rate-limit errors.
+   * @param {Function} fn
+   * @param {number} delay - milliseconds
+   */
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
   // ==========================================================================
   // 1. DATA STATE & CONFIGURATION
   // ==========================================================================
@@ -364,14 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const toast = document.createElement('div');
     toast.className = `toast-message ${type}`;
     
-    let icon = '';
+    // Build toast safely without innerHTML to prevent XSS
+    const iconSpan = document.createElement('span');
     if (type === 'success') {
-      icon = '<span style="color: var(--neon-green)">✓</span>';
+      iconSpan.style.color = 'var(--neon-green)';
+      iconSpan.textContent = '✓';
     } else {
-      icon = '<span style="color: var(--neon-cyan)">⚡</span>';
+      iconSpan.style.color = 'var(--neon-cyan)';
+      iconSpan.textContent = '⚡';
     }
-
-    toast.innerHTML = `${icon} <span>${message}</span>`;
+    const msgSpan = document.createElement('span');
+    safeText(msgSpan, message);
+    toast.appendChild(iconSpan);
+    toast.appendChild(document.createTextNode(' '));
+    toast.appendChild(msgSpan);
     toastContainer.appendChild(toast);
     
     setTimeout(() => {
@@ -960,7 +995,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (anime) {
         empty = false;
         const li = document.createElement('li');
-        li.innerHTML = `<strong>#${r}</strong> - ${anime.title}`;
+        // Safe DOM construction — anime.title from Jikan API but still sanitized
+        const rankBold = document.createElement('strong');
+        rankBold.textContent = `#${r}`;
+        li.appendChild(rankBold);
+        li.appendChild(document.createTextNode(' - '));
+        li.appendChild(document.createTextNode(anime.title));
         userTopListSummary.appendChild(li);
       }
     }
@@ -1152,19 +1192,41 @@ document.addEventListener('DOMContentLoaded', () => {
       const msgDiv = document.createElement('div');
       msgDiv.className = `chat-message ${msg.self ? 'self' : ''}`;
 
-      msgDiv.innerHTML = `
-        <div class="chat-msg-avatar">
-          <img src="${msg.avatar}" alt="${msg.sender}">
-        </div>
-        <div class="chat-msg-body">
-          <div class="chat-msg-sender-meta">
-            <span class="chat-msg-sender">${msg.sender}</span>
-            <span class="chat-msg-time">${msg.time}</span>
-          </div>
-          <div class="chat-msg-bubble">${msg.message}</div>
-        </div>
-      `;
+      // === SAFE DOM CONSTRUCTION (XSS-protected) ===
+      // Never inject msg.sender, msg.message, or msg.avatar via innerHTML.
+      // All user-controlled fields are set via textContent or validated attributes.
 
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'chat-msg-avatar';
+      const avatarImg = document.createElement('img');
+      // Validate avatar URL is a safe absolute URL before setting
+      const safeAvatar = (typeof msg.avatar === 'string' && msg.avatar.startsWith('https://')) ? msg.avatar : '';
+      avatarImg.src = safeAvatar;
+      avatarImg.alt = '';
+      avatarDiv.appendChild(avatarImg);
+
+      const bodyDiv = document.createElement('div');
+      bodyDiv.className = 'chat-msg-body';
+
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'chat-msg-sender-meta';
+      const senderSpan = document.createElement('span');
+      senderSpan.className = 'chat-msg-sender';
+      safeText(senderSpan, msg.sender);
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'chat-msg-time';
+      safeText(timeSpan, msg.time);
+      metaDiv.appendChild(senderSpan);
+      metaDiv.appendChild(timeSpan);
+
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'chat-msg-bubble';
+      safeText(bubbleDiv, msg.message);
+
+      bodyDiv.appendChild(metaDiv);
+      bodyDiv.appendChild(bubbleDiv);
+      msgDiv.appendChild(avatarDiv);
+      msgDiv.appendChild(bodyDiv);
       chatMessagesStream.appendChild(msgDiv);
     });
 
