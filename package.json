@@ -1,0 +1,23 @@
+{
+  "name": "japafan",
+  "version": "1.0.0",
+  "description": "Premium Anime Fan Hub with MAL API Integration",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "anime",
+    "otaku",
+    "tier-list",
+    "mal-api",
+    "matchmaker"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}

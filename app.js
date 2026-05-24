@@ -1,0 +1,2266 @@
+import { supabaseService } from './supabase-client.js';
+
+/* ==========================================================================
+   JAPAFAN APPLICATION ENGINE
+   ========================================================================== */
+
+document.addEventListener('DOMContentLoaded', () => {
+  
+  // ==========================================================================
+  // 1. DATA STATE & CONFIGURATION
+  // ==========================================================================
+
+  // Pre-seeded local fallback anime data in case of API failure / rate limits
+  const LOCAL_FALLBACK_ANIME = [
+    {
+      mal_id: 1535,
+      title: "Death Note",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/9/9453l.jpg" } },
+      score: 8.62,
+      rank: 29,
+      type: "TV",
+      episodes: 37,
+      status: "Finished Airing",
+      genres: [{ name: "Mystery" }, { name: "Supernatural" }, { name: "Suspense" }],
+      synopsis: "A shinigami, as a god of death, can kill any person—provided they see their victim's face and write their victim's name in a notebook called a Death Note. One day, Ryuk, bored by the shinigami lifestyle and interested in seeing how a human would use a Death Note, drops one into the human realm. High school student Light Yagami finds it and tests the deadly notebook by writing a criminal's name in it. When the criminal dies immediately, Light is greatly surprised and quickly recognizes the devastating power that has fallen into his hands.",
+      trailer: { embed_url: "https://www.youtube.com/embed/NlJZ-YgAt-c" }
+    },
+    {
+      mal_id: 16498,
+      title: "Attack on Titan Season 2",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/4/84177l.jpg" } },
+      score: 8.50,
+      rank: 112,
+      type: "TV",
+      episodes: 12,
+      status: "Finished Airing",
+      genres: [{ name: "Action" }, { name: "Drama" }, { name: "Fantasy" }, { name: "Suspense" }],
+      synopsis: "For centuries, humanity has been hunted by giant, mindless predators known as Titans. Eren Yeager joins the Scout Regiment to eradicate them all after seeing his mother eaten. Alongside his friends Mikasa and Armin, Eren fights to recover their world, only to discover deep conspiracies regarding the origins of the Titans and his own mysterious powers.",
+      trailer: { embed_url: "https://www.youtube.com/embed/z5Dq7_bM5bY" }
+    },
+    {
+      mal_id: 5114,
+      title: "Fullmetal Alchemist: Brotherhood",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/1223/96541l.jpg" } },
+      score: 9.10,
+      rank: 1,
+      type: "TV",
+      episodes: 64,
+      status: "Finished Airing",
+      genres: [{ name: "Action" }, { name: "Adventure" }, { name: "Drama" }, { name: "Fantasy" }],
+      synopsis: "After a horrific alchemy experiment goes wrong in the Elric household, brothers Edward and Alphonse are left in catastrophic states. With his military alchemist status, Edward searches for the Philosopher's Stone alongside his brother to restore their bodies, uncovering a nationwide conspiracy that threatens the lives of millions.",
+      trailer: { embed_url: "https://www.youtube.com/embed/2uq34TeWEdQ" }
+    },
+    {
+      mal_id: 20,
+      title: "Naruto",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/13/11171l.jpg" } },
+      score: 7.99,
+      rank: 660,
+      type: "TV",
+      episodes: 220,
+      status: "Finished Airing",
+      genres: [{ name: "Action" }, { name: "Adventure" }, { name: "Fantasy" }],
+      synopsis: "Moments before Naruto Uzumaki's birth, a huge demon known as the Nine-Tailed Fox attacked Konoha, the Hidden Leaf Village. In order to save the village, the leader, the Fourth Hokage, sealed the beast inside Naruto. Now, Naruto is a hyperactive ninja trying to gain the respect of his village and fulfill his ultimate dream of becoming the Hokage.",
+      trailer: { embed_url: "https://www.youtube.com/embed/-G9BqkgZXRA" }
+    },
+    {
+      mal_id: 11061,
+      title: "Hunter x Hunter (2011)",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/1337/99013l.jpg" } },
+      score: 9.04,
+      rank: 9,
+      type: "TV",
+      episodes: 148,
+      status: "Finished Airing",
+      genres: [{ name: "Action" }, { name: "Adventure" }, { name: "Fantasy" }],
+      synopsis: "Gon Freecss aspires to become a Hunter, an exceptional individual licensed to track down secret treasures, rare beasts, and even other individuals. Gon departs on a journey to pass the rigorous Hunter Exam and find his long-lost father, making lifelong companions like Killua, Kurapika, and Leorio along the way.",
+      trailer: { embed_url: "https://www.youtube.com/embed/d6kBeJjR070" }
+    },
+    {
+      mal_id: 199,
+      title: "Spirited Away",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/6/79593l.jpg" } },
+      score: 8.78,
+      rank: 45,
+      type: "Movie",
+      episodes: 1,
+      status: "Finished Airing",
+      genres: [{ name: "Adventure" }, { name: "Drama" }, { name: "Supernatural" }],
+      synopsis: "Stubborn, spoiled, and naive, 10-year-old Chihiro Ogino is less than thrilled when she and her parents discover an abandoned amusement park. After her parents undergo a mysterious transformation into pigs, she must work in a magical bathhouse for spirits to secure their freedom and return to the human world.",
+      trailer: { embed_url: "https://www.youtube.com/embed/ByXuk9QqQkk" }
+    },
+    {
+      mal_id: 40748,
+      title: "Jujutsu Kaisen",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/1171/109222l.jpg" } },
+      score: 8.63,
+      rank: 75,
+      type: "TV",
+      episodes: 24,
+      status: "Finished Airing",
+      genres: [{ name: "Action" }, { name: "Fantasy" }],
+      synopsis: "Idly indulging in baseless supernatural activities with the Occult Club, high schooler Yuuji Itadori spends his days at either the clubroom or the hospital. However, his life takes a drastic turn when he encounters a cursed object and swallows a finger belonging to the legendary curse Ryomen Sukuna.",
+      trailer: { embed_url: "https://www.youtube.com/embed/PkzL761g1Lo" }
+    },
+    {
+      mal_id: 38000,
+      title: "Demon Slayer: Kimetsu no Yaiba",
+      images: { jpg: { large_image_url: "https://cdn.myanimelist.net/images/anime/1919/104126l.jpg" } },
+      score: 8.47,
+      rank: 135,
+      type: "TV",
+      episodes: 26,
+      status: "Finished Airing",
+      genres: [{ name: "Action" }, { name: "Fantasy" }, { name: "Supernatural" }],
+      synopsis: "Ever since the death of his father, the burden of supporting the family has fallen upon Tanjirou Kamado. Though living impoverished on a remote mountain, the Kamado family is able to enjoy a relatively peaceful life. One day, Tanjirou decides to go down to the local village to make a little money, only to return to find his family slaughtered and his sister Nezuko turned into a demon.",
+      trailer: { embed_url: "https://www.youtube.com/embed/6vMuWuWlW4I" }
+    }
+  ];
+
+  // Prepopulated community fan profiles
+  const COMMUNITY_FANS = [
+    {
+      id: "sakurachan",
+      name: "SakuraChan 🌸",
+      avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=SakuraChan&backgroundColor=ff007f",
+      level: "Lv.5 Sensei",
+      bio: "Romance & Slice of life enthusiast! Wholesome stories make my heart melt. Standard manga collector.",
+      favoriteGenres: ["Romance", "Slice of Life", "Comedy"],
+      topAnime: ["Spirited Away", "Naruto"],
+      chatStyle: "wholesome",
+      responses: {
+        recommend: "Oh! You should definitely check out Spirited Away or Horimiya! They are absolute masterpieces! 💖",
+        general: "Haii! Welcome to the lobby! Hope everyone is having a wonderful day talking about anime! ✨",
+        romance: "Aaaah! Romance anime are my absolute favorite! The feels, the tears! 😭💕",
+        fallback: "That sounds so interesting! I'll have to add that to my watch list! Double tab! 😍"
+      }
+    },
+    {
+      id: "gokustan",
+      name: "GokuStan ⚡",
+      avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=GokuStan&backgroundColor=00f0ff",
+      level: "Lv.4 Elite",
+      bio: "Shonen fights are my oxygen! Power scaling is a science. If it doesn't have training arcs, I'm out.",
+      favoriteGenres: ["Action", "Adventure", "Fantasy"],
+      topAnime: ["Naruto", "Fullmetal Alchemist: Brotherhood", "Jujutsu Kaisen"],
+      chatStyle: "hype",
+      responses: {
+        recommend: "If you want absolute hype battles, go watch Jujutsu Kaisen or Hunter x Hunter right now! Insane fights!",
+        general: "What's up warriors! Who is ready to discuss the strongest characters today? Naruto vs Luffy?! Let's go!",
+        shonen: "Shonen actions are the peak of fiction! Nothing compares to a main character screaming and powering up!",
+        fallback: "Sounds cool, but can they beat Goku though? Just saying, Goku soloes!"
+      }
+    },
+    {
+      id: "lelouchfan",
+      name: "CodeGeassEnjoyer 👁️",
+      avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Lelouch&backgroundColor=8a2be2",
+      level: "Lv.6 Sage",
+      bio: "All hail Lelouch! Thriller, mind games, and deep philosophical stories only. Death Note is my holy book.",
+      favoriteGenres: ["Mystery", "Thriller", "Supernatural"],
+      topAnime: ["Death Note", "Fullmetal Alchemist: Brotherhood"],
+      chatStyle: "intellectual",
+      responses: {
+        recommend: "If you seek complex mental warfare and moral grayness, you must watch Death Note immediately.",
+        general: "A warm greeting. I am always looking for shows that challenge intellectual boundaries. Any suggestions?",
+        mystery: "Mystery and psychological warfare are the only genres that truly captivate the human intellect. Lelouch proves this.",
+        fallback: "An intriguing choice. However, does it possess a satisfying intellectual climax, or is it merely standard tropes?"
+      }
+    },
+    {
+      id: "cybernneko",
+      name: "CyberNeko 🐾",
+      avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=CyberNeko&backgroundColor=39ff14",
+      level: "Lv.3 Adventurer",
+      bio: "Sci-Fi fan, mecha geek, and retro cyberpunk aesthetic lover. Let's talk about the future!",
+      favoriteGenres: ["Sci-Fi", "Action", "Supernatural"],
+      topAnime: ["Attack on Titan Season 2", "Jujutsu Kaisen"],
+      chatStyle: "gamer",
+      responses: {
+        recommend: "Check out Cyberpunk Edgerunners or Evangelion. Absolute cyber vibes! 🤖",
+        general: "Meow! System online! Ready to chat about mecha and retro sci-fi! 👾",
+        scifi: "Sci-fi is awesome because it shows us what the future might look like. Tech is cool! ⚡",
+        fallback: "Hmm, sounds okay, but does it have cool robots or neon cities? That's what I live for! 🐾"
+      }
+    }
+  ];
+
+  // App Central State Object
+  const state = {
+    user: {
+      username: "OtakuGamer",
+      avatarSeed: "JapaFanUser",
+      bio: "Living in a simulation. Searching for the ultimate episode.",
+      favoriteGenres: ["Action", "Adventure", "Fantasy"],
+      level: "Lv.3 Sage"
+    },
+    // Top 5 anime selection: mapping rank index (1 to 5) to anime details (or null)
+    tierList: {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null
+    },
+    // User written reflections for each tier rank
+    tierNotes: {
+      1: "",
+      2: "",
+      3: "",
+      4: "",
+      5: ""
+    },
+    // Shelved inventory of searched anime ready to rank
+    inventory: [],
+    // Dynamic discussion comments left on specific anime mal_id
+    animeComments: {},
+    // Active channel chats
+    chatLogs: {
+      general: [
+        { sender: "SakuraChan 🌸", avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=SakuraChan&backgroundColor=ff007f", message: "Haii everyone! Welcome! Has anyone watched the latest season of Demon Slayer?", time: "20:41", self: false },
+        { sender: "GokuStan ⚡", avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=GokuStan&backgroundColor=00f0ff", message: "Bro, the animation in Demon Slayer is insane! But the storyline in Hunter x Hunter is still king.", time: "20:42", self: false },
+        { sender: "CodeGeassEnjoyer 👁️", avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Lelouch&backgroundColor=8a2be2", message: "Animation is merely paint. It is the tactical brilliance of the script that counts. That is why Death Note remains unmatched.", time: "20:42", self: false }
+      ],
+      shonen: [
+        { sender: "GokuStan ⚡", avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=GokuStan&backgroundColor=00f0ff", message: "Power scaling time! Naruto Sage Mode vs Luffy Gear 4. Who takes it?", time: "20:30", self: false },
+        { sender: "CyberNeko 🐾", avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=CyberNeko&backgroundColor=39ff14", message: "Naruto takes it speed-wise, but Gear 4 has insane bounce and durability! 🥊", time: "20:32", self: false }
+      ],
+      romance: [
+        { sender: "SakuraChan 🌸", avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=SakuraChan&backgroundColor=ff007f", message: "Kimi ni Todoke is so wholesome! I literally cried three times during the confession scene! 😭❤️", time: "20:15", self: false }
+      ]
+    },
+    activeChannel: "general",
+    apiCache: {}
+  };
+
+  // Local storage prefix
+  const STORAGE_KEY = "japafan_app_state";
+
+  // Load state from local storage if exists
+  function loadState() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.user) state.user = parsed.user;
+        if (parsed.tierList) state.tierList = parsed.tierList;
+        if (parsed.tierNotes) state.tierNotes = parsed.tierNotes;
+        if (parsed.inventory) state.inventory = parsed.inventory;
+        if (parsed.animeComments) state.animeComments = parsed.animeComments;
+        if (parsed.chatLogs) state.chatLogs = parsed.chatLogs;
+      } catch (e) {
+        console.error("Error loading local storage state: ", e);
+      }
+    } else {
+      // Default seed inventory with some cool titles from fallbacks
+      state.inventory = [
+        LOCAL_FALLBACK_ANIME[0], // Death Note
+        LOCAL_FALLBACK_ANIME[3]  // Naruto
+      ];
+    }
+  }
+
+  // Save current state to local storage
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      user: state.user,
+      tierList: state.tierList,
+      tierNotes: state.tierNotes,
+      inventory: state.inventory,
+      animeComments: state.animeComments,
+      chatLogs: state.chatLogs
+    }));
+  }
+
+  loadState();
+
+  // ==========================================================================
+  // 2. DOM SELECTIONS
+  // ==========================================================================
+
+  // Tab Shell elements
+  const navTabs = document.querySelectorAll('.nav-tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  // Search Discover elements
+  const searchInput = document.getElementById('anime-search-input');
+  const searchDropdown = document.getElementById('search-results-dropdown');
+  const clearSearchBtn = document.getElementById('clear-search-btn');
+  const discoverGrid = document.getElementById('discover-anime-grid');
+  const catalogLoader = document.getElementById('catalog-loader');
+  const activityFeed = document.getElementById('activity-feed');
+  const filterPills = document.querySelectorAll('.filter-pill');
+
+  // Ranker page elements
+  const dropZones = document.querySelectorAll('.tier-dropzone');
+  const noteInputs = document.querySelectorAll('.tier-note-input');
+  const inventorySearch = document.getElementById('inventory-search-input');
+  const inventoryDropdown = document.getElementById('inventory-search-dropdown');
+  const inventoryShelf = document.getElementById('inventory-shelf');
+  const exportBadgeBtn = document.getElementById('export-badge-btn');
+
+  // Matchmaker page elements
+  const matchmakerUserAvatar = document.getElementById('matchmaker-user-avatar');
+  const matchmakerUserName = document.getElementById('matchmaker-user-name');
+  const matchmakerUserLevel = document.getElementById('matchmaker-user-level');
+  const userTopListSummary = document.getElementById('user-top-list-summary');
+  const userGenresSummary = document.getElementById('user-genres-summary');
+  const matchesGrid = document.getElementById('matches-grid');
+  const refreshMatchesBtn = document.getElementById('refresh-matches-btn');
+
+  // Chat lobby elements
+  const channelButtons = document.querySelectorAll('.channel-item');
+  const chatMessagesStream = document.getElementById('chat-messages-stream');
+  const chatMessageForm = document.getElementById('chat-message-form');
+  const chatMessageInput = document.getElementById('chat-message-input');
+  const currentChannelTitle = document.getElementById('current-channel-title');
+  const currentChannelDesc = document.getElementById('current-channel-desc');
+  const chatTypingIndicator = document.getElementById('chat-typing-indicator');
+  const typingUserText = chatTypingIndicator.querySelector('.typing-user-text');
+  const chatUnreadBadge = document.getElementById('chat-unread');
+
+  // Profile modal settings elements
+  const openProfileBtn = document.getElementById('open-profile-btn');
+  const chatFooterProfileBtn = document.getElementById('chat-footer-profile-trigger');
+  const profileModal = document.getElementById('profile-modal');
+  const closeProfileBtn = document.getElementById('close-profile-btn');
+  const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+  const profileForm = document.getElementById('profile-edit-form');
+  const avatarGridPicker = document.getElementById('avatar-grid-picker');
+  const selectedAvatarSeed = document.getElementById('selected-avatar-seed');
+  const profileUsernameInput = document.getElementById('profile-username');
+  const profileBioInput = document.getElementById('profile-bio');
+  const profileGenresPicker = document.getElementById('profile-genres-picker');
+
+  // Details Modal elements
+  const detailsModal = document.getElementById('details-modal');
+  const closeDetailsBtn = document.getElementById('close-details-btn');
+  const detailsModalContent = document.getElementById('details-modal-content');
+
+  // Export Modal elements
+  const exportModal = document.getElementById('export-modal');
+  const closeExportBtn = document.getElementById('close-export-btn');
+  const otakuCardExport = document.getElementById('otaku-card-export');
+  const copyBadgeCodeBtn = document.getElementById('copy-badge-code-btn');
+  const downloadBadgeBtn = document.getElementById('download-badge-btn');
+
+  // Toast Container
+  const toastContainer = document.getElementById('toast-container');
+
+  // Global details
+  const headerAvatar = document.getElementById('header-avatar');
+  const headerUsername = document.getElementById('header-username');
+  const chatFooterAvatar = document.getElementById('chat-footer-avatar');
+  const chatFooterUsername = document.getElementById('chat-footer-username');
+
+
+  // ==========================================================================
+  // 3. HELPER UTILITIES & UI ALERTS
+  // ==========================================================================
+
+  // Displays a beautiful glowing cyber toast alert
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    
+    let icon = '';
+    if (type === 'success') {
+      icon = '<span style="color: var(--neon-green)">✓</span>';
+    } else {
+      icon = '<span style="color: var(--neon-cyan)">⚡</span>';
+    }
+
+    toast.innerHTML = `${icon} <span>${message}</span>`;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // Update overall profile visual indicators globally
+  function updateGlobalProfileUI() {
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.user.avatarSeed}&backgroundColor=ff007f`;
+    
+    // Header
+    headerAvatar.src = avatarUrl;
+    headerUsername.textContent = state.user.username;
+    
+    // Chat Sidebar Footer
+    chatFooterAvatar.src = avatarUrl;
+    chatFooterUsername.textContent = state.user.username;
+
+    // Matchmaker Summary
+    if (matchmakerUserAvatar) {
+      matchmakerUserAvatar.src = avatarUrl;
+      matchmakerUserName.textContent = state.user.username;
+      matchmakerUserLevel.textContent = state.user.level;
+    }
+
+    // Trigger visual progress & chart updates
+    renderXPProgress();
+    drawGenreDonutSVG();
+    drawNarrativeRadarSVG();
+  }
+
+  // Award Otaku XP and update level rankings
+  function gainXP(amount) {
+    if (typeof state.user.xp === 'undefined') state.user.xp = 0;
+    
+    const oldXp = state.user.xp;
+    state.user.xp += amount;
+    
+    const oldLevel = Math.floor(oldXp / 100) + 1;
+    const newLevel = Math.floor(state.user.xp / 100) + 1;
+    
+    const getLevelTitle = (lvl) => {
+      if (lvl === 1) return "Trainee";
+      if (lvl === 2) return "Otaku";
+      if (lvl === 3) return "Elite";
+      if (lvl === 4) return "Sensei";
+      return "Sage";
+    };
+    
+    state.user.level = `Lv.${newLevel} ${getLevelTitle(newLevel)}`;
+    saveState();
+    
+    showToast(`Earned +${amount} Otaku XP!`, "success");
+    
+    renderXPProgress();
+    updateGlobalProfileUI();
+    
+    if (newLevel > oldLevel) {
+      showToast(`LEVEL UP! You are now a ${state.user.level}! 🎉`, "success");
+      logActivity(`<strong>LEVEL UP!</strong> You reached ${state.user.level}!`);
+    }
+  }
+
+  // Draw HSL glowing SVG Donut Genre charts
+  function drawGenreDonutSVG() {
+    const el = document.getElementById('donut-chart-svg');
+    if (!el) return;
+    
+    const genres = state.user.favoriteGenres || [];
+    if (genres.length === 0) {
+      el.innerHTML = '<span style="font-size:0.65rem; color:var(--text-muted)">Define favorites!</span>';
+      return;
+    }
+    
+    const size = 80;
+    const center = size / 2;
+    const radius = 24;
+    const strokeWidth = 5.5;
+    const circ = 2 * Math.PI * radius;
+    
+    let arcs = '';
+    const sliceColors = ['#ff007f', '#00f0ff', '#fff01f'];
+    
+    const count = genres.length;
+    const sliceAngle = circ / count;
+    
+    let totalOffset = 0;
+    genres.forEach((genre, i) => {
+      const color = sliceColors[i % sliceColors.length];
+      const strokeDash = `${sliceAngle - 2} ${circ - sliceAngle + 2}`;
+      const strokeOffset = totalOffset;
+      
+      arcs += `
+        <circle cx="${center}" cy="${center}" r="${radius}" 
+          fill="transparent" 
+          stroke="${color}" 
+          stroke-width="${strokeWidth}" 
+          stroke-dasharray="${strokeDash}" 
+          stroke-dashoffset="${strokeOffset}" 
+          style="transform: rotate(-90deg); transform-origin: center; filter: drop-shadow(0 0 3px ${color}80);"
+        />
+      `;
+      totalOffset -= sliceAngle;
+    });
+    
+    el.innerHTML = `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${center}" cy="${center}" r="${radius - 4}" fill="rgba(10, 8, 21, 0.6)" />
+        ${arcs}
+        <text x="${center}" y="${center + 3}" text-anchor="middle" fill="#ffffff" font-size="8" font-family="var(--font-display)" font-weight="700">${genres.length} SVR</text>
+      </svg>
+    `;
+  }
+
+  // Draw HSL glowing SVG Radar Narrative charts
+  function drawNarrativeRadarSVG() {
+    const el = document.getElementById('radar-chart-svg');
+    if (!el) return;
+    
+    const categories = ['Act', 'Dep', 'Art', 'Fee', 'Lor'];
+    const values = { Act: 50, Dep: 50, Art: 75, Fee: 50, Lor: 50 };
+    
+    const fg = state.user.favoriteGenres || [];
+    fg.forEach(g => {
+      if (['Action', 'Adventure', 'Sports'].includes(g)) values.Act += 25;
+      if (['Mystery', 'Thriller', 'Supernatural'].includes(g)) values.Dep += 25;
+      if (['Drama', 'Romance', 'Slice of Life'].includes(g)) values.Fee += 25;
+      if (['Fantasy', 'Sci-Fi'].includes(g)) values.Lor += 25;
+    });
+    
+    for (let r in state.tierList) {
+      const anime = state.tierList[r];
+      if (anime) {
+        const title = anime.title.toLowerCase();
+        if (title.includes('naruto') || title.includes('jujutsu') || title.includes('hunter') || title.includes('slayer')) values.Act += 15;
+        if (title.includes('death') || title.includes('brotherhood') || title.includes('alchemist')) values.Dep += 15;
+        if (title.includes('spirited') || title.includes('away')) values.Fee += 15;
+        if (title.includes('titan') || title.includes('attack')) values.Lor += 15;
+      }
+    }
+    
+    for (let k in values) {
+      if (values[k] > 90) values[k] = 90;
+      if (values[k] < 25) values[k] = 25;
+    }
+    
+    const size = 80;
+    const center = size / 2;
+    const radius = 26;
+    
+    const getPoint = (index, value) => {
+      const angle = (Math.PI * 2 / 5) * index - Math.PI / 2;
+      const r = (value / 100) * radius;
+      return {
+        x: center + Math.cos(angle) * r,
+        y: center + Math.sin(angle) * r
+      };
+    };
+    
+    let gridPolys = '';
+    [0.4, 0.7, 1.0].forEach(scale => {
+      const pts = [];
+      for (let i = 0; i < 5; i++) {
+        const p = getPoint(i, scale * 100);
+        pts.push(`${p.x},${p.y}`);
+      }
+      gridPolys += `<polygon points="${pts.join(' ')}" fill="transparent" stroke="rgba(255, 255, 255, 0.05)" stroke-width="0.75" />`;
+    });
+    
+    const userPts = [];
+    for (let i = 0; i < 5; i++) {
+      const p = getPoint(i, values[categories[i]]);
+      userPts.push(`${p.x},${p.y}`);
+    }
+    
+    let labelsHTML = '';
+    const labelDistance = 34;
+    categories.forEach((cat, i) => {
+      const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+      const lx = center + Math.cos(angle) * labelDistance;
+      const ly = center + Math.sin(angle) * labelDistance;
+      labelsHTML += `<text x="${lx}" y="${ly + 2}" text-anchor="middle" fill="var(--text-muted)" font-size="6" font-family="var(--font-display)" font-weight="600">${cat}</text>`;
+    });
+    
+    el.innerHTML = `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        ${gridPolys}
+        <polygon points="${userPts.join(' ')}" 
+          fill="rgba(0, 240, 255, 0.12)" 
+          stroke="var(--neon-cyan)" 
+          stroke-width="1.25" 
+          style="filter: drop-shadow(0 0 2px var(--neon-cyan));" 
+        />
+        ${labelsHTML}
+      </svg>
+    `;
+  }
+
+  // Render Otaku XP progress fills
+  function renderXPProgress() {
+    const fill = document.getElementById('user-xp-fill');
+    const text = document.getElementById('user-xp-text');
+    if (!fill || !text) return;
+    
+    if (typeof state.user.xp === 'undefined') state.user.xp = 0;
+    
+    const levelXp = state.user.xp % 100;
+    fill.style.width = `${levelXp}%`;
+    text.textContent = `${levelXp}/100 XP`;
+  }
+
+
+  // ==========================================================================
+  // 4. API CONNECTIVITY (JIKAN MAL API V4)
+  // ==========================================================================
+
+  // Fetch seasonal trending anime (uses robust caching and local fallback)
+  async function fetchTrendingAnime(filter = 'all') {
+    if (catalogLoader) catalogLoader.style.display = 'flex';
+    if (discoverGrid) discoverGrid.innerHTML = '';
+    
+    const cacheKey = `trending_${filter}`;
+    if (state.apiCache[cacheKey]) {
+      renderAnimeGrid(state.apiCache[cacheKey]);
+      if (catalogLoader) catalogLoader.style.display = 'none';
+      return;
+    }
+
+    try {
+      let url = 'https://api.jikan.moe/v4/top/anime?limit=12';
+      if (filter === 'movie') {
+        url += '&type=movie';
+      } else if (filter === 'tv') {
+        url += '&type=tv';
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("API Limit reached / Response error");
+      const json = await response.json();
+      
+      if (json.data && json.data.length > 0) {
+        state.apiCache[cacheKey] = json.data;
+        renderAnimeGrid(json.data);
+      } else {
+        throw new Error("No data returned");
+      }
+    } catch (error) {
+      console.warn("Jikan API error. Loading offline mock catalog data...", error);
+      showToast("Syncing offline fallback database...", "info");
+      
+      // Filter offline data to fit selection
+      let filtered = LOCAL_FALLBACK_ANIME;
+      if (filter === 'movie') {
+        filtered = LOCAL_FALLBACK_ANIME.filter(a => a.type === 'Movie');
+      } else if (filter === 'tv') {
+        filtered = LOCAL_FALLBACK_ANIME.filter(a => a.type === 'TV');
+      }
+      
+      renderAnimeGrid(filtered);
+    } finally {
+      if (catalogLoader) catalogLoader.style.display = 'none';
+    }
+  }
+
+  // Live anime searching with API caching
+  async function searchAnimeQuery(query) {
+    if (!query || query.trim().length < 3) return [];
+    
+    const cacheKey = `search_${query.toLowerCase()}`;
+    if (state.apiCache[cacheKey]) {
+      return state.apiCache[cacheKey];
+    }
+
+    try {
+      const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=6`);
+      if (!response.ok) throw new Error("Search API error / rate limit");
+      const json = await response.json();
+      
+      if (json.data) {
+        state.apiCache[cacheKey] = json.data;
+        return json.data;
+      }
+      return [];
+    } catch (e) {
+      console.warn("Jikan search error. Matching local fallback data...", e);
+      // Fallback search matching in local array
+      const term = query.toLowerCase();
+      return LOCAL_FALLBACK_ANIME.filter(a => 
+        a.title.toLowerCase().includes(term) || 
+        a.genres.some(g => g.name.toLowerCase().includes(term))
+      );
+    }
+  }
+
+
+  // ==========================================================================
+  // 5. RENDER COMPONENTS
+  // ==========================================================================
+
+  // Build anime items in the Discover Grid
+  function renderAnimeGrid(animeList) {
+    if (!discoverGrid) return;
+    discoverGrid.innerHTML = '';
+    
+    animeList.forEach(anime => {
+      const card = document.createElement('div');
+      card.className = 'anime-card';
+      card.setAttribute('data-id', anime.mal_id);
+      
+      const score = anime.score ? anime.score.toFixed(2) : 'N/A';
+      const type = anime.type || 'TV';
+      const eps = anime.episodes ? `${anime.episodes} eps` : 'Ongoing';
+      const poster = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || '';
+
+      card.innerHTML = `
+        <div class="anime-card-poster">
+          <img src="${poster}" alt="${anime.title}" loading="lazy">
+          <div class="anime-card-badge-score">${score}</div>
+        </div>
+        <div class="anime-card-info">
+          <h3 class="anime-card-title">${anime.title}</h3>
+          <div class="anime-card-meta">
+            <span>${type}</span>
+            <span>${eps}</span>
+          </div>
+        </div>
+        <div class="anime-card-action-overlay">
+          <button class="small-action-btn view-details-btn">Details</button>
+          <button class="small-action-btn shelf-btn">Add to Rank</button>
+        </div>
+      `;
+
+      // Event Listeners
+      card.querySelector('.view-details-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAnimeDetails(anime);
+      });
+
+      card.querySelector('.shelf-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        addAnimeToInventory(anime);
+      });
+
+      card.addEventListener('click', () => {
+        openAnimeDetails(anime);
+      });
+
+      discoverGrid.appendChild(card);
+    });
+  }
+
+  // Adds an anime to the quick rank inventory board
+  function addAnimeToInventory(anime) {
+    // Avoid duplicates in shelf
+    if (state.inventory.some(item => item.mal_id === anime.mal_id)) {
+      showToast(`${anime.title} is already in your Selection Shelf!`, "info");
+      return;
+    }
+
+    // Also verify if already ranked
+    for (let r in state.tierList) {
+      if (state.tierList[r] && state.tierList[r].mal_id === anime.mal_id) {
+        showToast(`${anime.title} is already ranked as Rank ${r}!`, "info");
+        return;
+      }
+    }
+
+    state.inventory.push(anime);
+    saveState();
+    renderInventoryShelf();
+    showToast(`Added ${anime.title} to selection bin!`, "success");
+    
+    // Spark dynamic activity log
+    logActivity(`${state.user.username} shelved <strong>${anime.title}</strong> to rank later.`);
+  }
+
+  // Render quick rank inventory cards
+  function renderInventoryShelf() {
+    if (!inventoryShelf) return;
+    inventoryShelf.innerHTML = '';
+
+    if (state.inventory.length === 0) {
+      inventoryShelf.innerHTML = '<div class="shelf-empty-state">No anime added to list yet. Search above to begin adding!</div>';
+      return;
+    }
+
+    state.inventory.forEach(anime => {
+      const item = document.createElement('div');
+      item.className = 'shelved-item';
+      item.setAttribute('draggable', 'true');
+      item.setAttribute('data-id', anime.mal_id);
+      
+      const poster = anime.images?.jpg?.image_url || anime.images?.jpg?.small_image_url || '';
+
+      item.innerHTML = `
+        <img src="${poster}" alt="${anime.title}">
+        <div class="shelved-quick-rank-overlay">
+          <button class="rank-trigger-btn" data-rank="1">R1</button>
+          <button class="rank-trigger-btn" data-rank="2">R2</button>
+          <button class="rank-trigger-btn" data-rank="3">R3</button>
+          <button class="rank-trigger-btn" data-rank="4">R4</button>
+          <button class="rank-trigger-btn" data-rank="5">R5</button>
+        </div>
+      `;
+
+      // Click handles for quick buttons
+      item.querySelectorAll('.rank-trigger-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const targetRank = parseInt(btn.getAttribute('data-rank'));
+          assignAnimeToRank(anime, targetRank);
+        });
+      });
+
+      // Drag and Drop Event listeners
+      item.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', anime.mal_id.toString());
+        item.style.opacity = '0.4';
+      });
+
+      item.addEventListener('dragend', () => {
+        item.style.opacity = '1';
+      });
+
+      inventoryShelf.appendChild(item);
+    });
+  }
+
+  // Render Tier list slots on ranker board
+  function renderTierList() {
+    for (let rank = 1; rank <= 5; rank++) {
+      const dz = document.getElementById(`dz-${rank}`);
+      if (!dz) continue;
+      
+      dz.innerHTML = '';
+      const anime = state.tierList[rank];
+      
+      if (!anime) {
+        dz.innerHTML = '<div class="dz-placeholder">Drag & drop or click R1-R5 on shelf item</div>';
+      } else {
+        const item = document.createElement('div');
+        item.className = 'ranked-item';
+        item.setAttribute('draggable', 'true');
+        item.setAttribute('data-id', anime.mal_id);
+        item.setAttribute('data-rank', rank);
+        
+        const poster = anime.images?.jpg?.image_url || '';
+
+        item.innerHTML = `
+          <img src="${poster}" alt="${anime.title}">
+          <button class="ranked-item-remove">&times;</button>
+        `;
+
+        item.querySelector('.ranked-item-remove').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeAnimeFromRank(rank);
+        });
+
+        item.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', `ranked-${rank}`);
+        });
+
+        dz.appendChild(item);
+      }
+
+      // Notes inputs
+      const noteInput = document.querySelector(`.tier-note-input[data-rank="${rank}"]`);
+      if (noteInput) {
+        noteInput.value = state.tierNotes[rank] || '';
+      }
+    }
+  }
+
+  // Move an anime into a rank slot
+  function assignAnimeToRank(anime, targetRank) {
+    const existing = state.tierList[targetRank];
+    
+    // Put current occupant back in shelf if exists
+    if (existing) {
+      state.inventory.push(existing);
+    }
+
+    // Remove from shelf
+    state.inventory = state.inventory.filter(item => item.mal_id !== anime.mal_id);
+    
+    // Clear out from any other rank positions to prevent duplicates
+    for (let r in state.tierList) {
+      if (state.tierList[r] && state.tierList[r].mal_id === anime.mal_id) {
+        state.tierList[r] = null;
+      }
+    }
+
+    // Place inside target rank slot
+    state.tierList[targetRank] = anime;
+    saveState();
+    
+    renderTierList();
+    renderInventoryShelf();
+    
+    showToast(`Ranked ${anime.title} as your Top #${targetRank}!`, "success");
+    logActivity(`You ranked <strong>${anime.title}</strong> as your absolute #${targetRank}!`);
+    gainXP(15);
+  }
+
+  // Remove ranked anime and push back to shelf
+  function removeAnimeFromRank(rank) {
+    const anime = state.tierList[rank];
+    if (!anime) return;
+
+    state.tierList[rank] = null;
+    state.inventory.push(anime);
+    saveState();
+
+    renderTierList();
+    renderInventoryShelf();
+    showToast(`Removed ${anime.title} from Rank ${rank}`, "info");
+  }
+
+
+  // ==========================================================================
+  // 6. DRAG AND DROP HANDLERS
+  // ==========================================================================
+
+  dropZones.forEach(dz => {
+    const rank = parseInt(dz.id.replace('dz-', ''));
+    
+    dz.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dz.classList.add('dragover');
+    });
+
+    dz.addEventListener('dragleave', () => {
+      dz.classList.remove('dragover');
+    });
+
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      
+      const dataStr = e.dataTransfer.getData('text/plain');
+      
+      if (dataStr.startsWith('ranked-')) {
+        // Rearranging existing rank
+        const oldRank = parseInt(dataStr.replace('ranked-', ''));
+        if (oldRank === rank) return;
+        
+        const movingAnime = state.tierList[oldRank];
+        const replacingAnime = state.tierList[rank];
+        
+        state.tierList[rank] = movingAnime;
+        state.tierList[oldRank] = replacingAnime;
+        saveState();
+        renderTierList();
+        showToast(`Swapped rank positions!`, "success");
+      } else {
+        // Dropping new anime from shelf inventory
+        const malId = parseInt(dataStr);
+        const anime = state.inventory.find(item => item.mal_id === malId);
+        if (anime) {
+          assignAnimeToRank(anime, rank);
+        }
+      }
+    });
+  });
+
+
+  // ==========================================================================
+  // 7. SOCIAL HUB & TASTE MATCHMAKER ALGORITHM
+  // ==========================================================================
+
+  // Refresh user stats cards on matchmaker
+  function renderUserTasteSummary() {
+    if (!userTopListSummary || !userGenresSummary) return;
+
+    userTopListSummary.innerHTML = '';
+    userGenresSummary.innerHTML = '';
+
+    // Ranked list
+    let empty = true;
+    for (let r = 1; r <= 5; r++) {
+      const anime = state.tierList[r];
+      if (anime) {
+        empty = false;
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>#${r}</strong> - ${anime.title}`;
+        userTopListSummary.appendChild(li);
+      }
+    }
+    if (empty) {
+      userTopListSummary.innerHTML = '<li class="text-muted" style="list-style:none">No anime ranked yet. Add some in My Rank!</li>';
+    }
+
+    // Favorite genres
+    if (state.user.favoriteGenres.length === 0) {
+      userGenresSummary.innerHTML = '<span class="text-muted">None specified in Profile settings</span>';
+    } else {
+      state.user.favoriteGenres.forEach(genre => {
+        const pill = document.createElement('span');
+        pill.className = 'genre-pill';
+        pill.textContent = genre;
+        userGenresSummary.appendChild(pill);
+      });
+    }
+  }
+
+  // Core taste matchmaking algorithm comparing profile overlaps
+  function calculateCompatibility(fan) {
+    let score = 50; // base score
+
+    // 1. Compare favorite genres overlap
+    const userGenres = state.user.favoriteGenres;
+    const fanGenres = fan.favoriteGenres;
+    let genreOverlapCount = 0;
+    
+    userGenres.forEach(g => {
+      if (fanGenres.includes(g)) genreOverlapCount++;
+    });
+    score += genreOverlapCount * 12; // +12% per shared genre
+
+    // 2. Compare ranked titles overlap
+    const userRankedTitles = [];
+    for (let r in state.tierList) {
+      if (state.tierList[r]) userRankedTitles.push(state.tierList[r].title.toLowerCase());
+    }
+
+    let titleOverlapCount = 0;
+    fan.topAnime.forEach(title => {
+      if (userRankedTitles.some(uTitle => uTitle.includes(title.toLowerCase()) || title.toLowerCase().includes(uTitle))) {
+        titleOverlapCount++;
+      }
+    });
+    score += titleOverlapCount * 20; // +20% per shared anime title
+
+    // Clamp score safely
+    if (score > 99) score = 99;
+    if (score < 40) score = 40 + Math.floor(Math.random() * 8);
+
+    return score;
+  }
+
+  // Build the list of global community matching cards
+  function renderCommunityMatches() {
+    if (!matchesGrid) return;
+    matchesGrid.innerHTML = '';
+
+    // Calculate score details for all fans and sort descending
+    const rankedMatches = COMMUNITY_FANS.map(fan => {
+      return {
+        ...fan,
+        scorePercent: calculateCompatibility(fan)
+      };
+    }).sort((a, b) => b.scorePercent - a.scorePercent);
+
+    rankedMatches.forEach(fan => {
+      const card = document.createElement('div');
+      card.className = 'match-card';
+      
+      const sharedGenres = fan.favoriteGenres.filter(g => state.user.favoriteGenres.includes(g));
+      const sharedGenresList = sharedGenres.length > 0 
+        ? sharedGenres.map(g => `<span class="genre-pill pink">${g}</span>`).join('')
+        : `<span class="text-muted" style="font-size:0.7rem">Shared interests</span>`;
+
+      card.innerHTML = `
+        <div class="match-card-header">
+          <div class="match-card-meta">
+            <div class="match-card-avatar">
+              <img src="${fan.avatar}" alt="${fan.name}">
+            </div>
+            <div class="match-card-user">
+              <span class="match-card-username">${fan.name}</span>
+              <span class="match-card-lvl">${fan.level}</span>
+            </div>
+          </div>
+          <div class="compatibility-meter">
+            <span class="percent-number">${fan.scorePercent}%</span>
+            <span class="percent-label">Match</span>
+          </div>
+        </div>
+        <p class="match-card-bio">"${fan.bio}"</p>
+        <div class="match-card-shared">
+          <div class="match-card-shared-title">Overlapping Genres</div>
+          <div class="shared-list">${sharedGenresList}</div>
+        </div>
+        <div class="match-card-actions">
+          <button class="match-action-btn compare-btn">Compare</button>
+          <button class="match-action-btn chat-btn">Chat Lobby</button>
+        </div>
+      `;
+
+      card.querySelector('.compare-btn').addEventListener('click', () => {
+        compareTastesModal(fan);
+      });
+
+      card.querySelector('.chat-btn').addEventListener('click', () => {
+        // Go directly to chat lobby with channel context if they match
+        switchTab('lobby');
+        // Pre-fill user input to say hello to specific person
+        if (chatMessageInput) {
+          chatMessageInput.value = `Hey ${fan.name}, saw we matched ${fan.scorePercent}% on Matchmaker!`;
+          chatMessageInput.focus();
+        }
+      });
+
+      matchesGrid.appendChild(card);
+    });
+  }
+
+  // Taste comparison details popup modal sheet
+  function compareTastesModal(fan) {
+    const fanTopList = fan.topAnime.map((title, i) => `<li><strong>#${i+1}</strong>: ${title}</li>`).join('');
+    
+    let userTopList = '';
+    let hasRank = false;
+    for (let r = 1; r <= 5; r++) {
+      if (state.tierList[r]) {
+        hasRank = true;
+        userTopList += `<li><strong>#${r}</strong>: ${state.tierList[r].title}</li>`;
+      }
+    }
+    if (!hasRank) {
+      userTopList = '<li class="text-muted">No ranked shows yet!</li>';
+    }
+
+    const modalHTML = `
+      <div style="position: relative; z-index: 10;">
+        <h2 style="font-family: var(--font-display); margin-bottom: 20px; color: var(--neon-pink); border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;">Taste Comparison: ${fan.name}</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+          <div style="background: rgba(10, 8, 21, 0.4); padding: 15px; border-radius: 8px; border: 1px solid var(--border-glass);">
+            <h4 style="color: var(--neon-cyan); font-family: var(--font-display); margin-bottom: 10px;">Your Ranks</h4>
+            <ul style="padding-left: 15px; font-size: 0.85rem; line-height: 1.8;">${userTopList}</ul>
+          </div>
+          <div style="background: rgba(10, 8, 21, 0.4); padding: 15px; border-radius: 8px; border: 1px solid var(--border-glass);">
+            <h4 style="color: var(--neon-pink); font-family: var(--font-display); margin-bottom: 10px;">${fan.name}'s Ranks</h4>
+            <ul style="padding-left: 15px; font-size: 0.85rem; line-height: 1.8;">${fanTopList}</ul>
+          </div>
+        </div>
+        <h4 style="font-family: var(--font-display); margin-bottom: 8px;">Favorite Genres Overlap</h4>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 25px;">
+          ${fan.favoriteGenres.map(g => {
+            const shared = state.user.favoriteGenres.includes(g);
+            return `<span class="genre-pill ${shared ? 'pink' : ''}" style="opacity: ${shared ? '1' : '0.4'}">${g} ${shared ? '✓' : ''}</span>`;
+          }).join('')}
+        </div>
+        <div style="display:flex; justify-content:flex-end">
+          <button class="glass-btn btn-secondary" onclick="document.getElementById('details-modal').classList.remove('active')">Close Detail View</button>
+        </div>
+      </div>
+    `;
+
+    if (detailsModalContent) {
+      detailsModalContent.innerHTML = modalHTML;
+      detailsModal.classList.add('active');
+    }
+  }
+
+
+  // ==========================================================================
+  // 8. SOCIAL CHATROOM LOBBY SIMULATOR
+  // ==========================================================================
+
+  // Populate active messages stream in panel
+  function renderChatMessages() {
+    if (!chatMessagesStream) return;
+    chatMessagesStream.innerHTML = '';
+
+    const logs = state.chatLogs[state.activeChannel] || [];
+    
+    if (logs.length === 0) {
+      chatMessagesStream.innerHTML = '<div class="chat-message system"><div class="chat-msg-system-bubble">Room created. Share your thoughts here!</div></div>';
+      return;
+    }
+
+    logs.forEach(msg => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `chat-message ${msg.self ? 'self' : ''}`;
+
+      msgDiv.innerHTML = `
+        <div class="chat-msg-avatar">
+          <img src="${msg.avatar}" alt="${msg.sender}">
+        </div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-sender-meta">
+            <span class="chat-msg-sender">${msg.sender}</span>
+            <span class="chat-msg-time">${msg.time}</span>
+          </div>
+          <div class="chat-msg-bubble">${msg.message}</div>
+        </div>
+      `;
+
+      chatMessagesStream.appendChild(msgDiv);
+    });
+
+    // Auto scroll bottom
+    chatMessagesStream.scrollTop = chatMessagesStream.scrollHeight;
+  }
+
+  // Trigger automated fan responses based on user query keywords
+  function simulateChatResponses(userMsg) {
+    const text = userMsg.toLowerCase();
+    
+    // Choose correct simulated responding character based on keywords
+    let responder = null;
+    let triggerKey = 'fallback';
+
+    if (text.includes('recommend') || text.includes('what watch') || text.includes('suggest')) {
+      responder = COMMUNITY_FANS[Math.floor(Math.random() * COMMUNITY_FANS.length)];
+      triggerKey = 'recommend';
+    } else if (text.includes('death note') || text.includes('lelouch') || text.includes('code geass') || text.includes('mystery') || text.includes('psychological')) {
+      responder = COMMUNITY_FANS.find(f => f.id === 'lelouchfan');
+      triggerKey = text.includes('mystery') ? 'mystery' : 'fallback';
+    } else if (text.includes('shonen') || text.includes('naruto') || text.includes('fight') || text.includes('battle') || text.includes('goku') || text.includes('luffy')) {
+      responder = COMMUNITY_FANS.find(f => f.id === 'gokustan');
+      triggerKey = text.includes('shonen') ? 'shonen' : 'fallback';
+    } else if (text.includes('romance') || text.includes('love') || text.includes('wholesome') || text.includes('spirited away') || text.includes('tears')) {
+      responder = COMMUNITY_FANS.find(f => f.id === 'sakurachan');
+      triggerKey = text.includes('romance') ? 'romance' : 'fallback';
+    } else if (text.includes('scifi') || text.includes('robot') || text.includes('mecha') || text.includes('cyber') || text.includes('neon')) {
+      responder = COMMUNITY_FANS.find(f => f.id === 'cybernneko');
+      triggerKey = text.includes('scifi') ? 'scifi' : 'fallback';
+    } else {
+      // Pick a random fan to say a general query or fallback
+      responder = COMMUNITY_FANS[Math.floor(Math.random() * COMMUNITY_FANS.length)];
+      triggerKey = Math.random() > 0.4 ? 'general' : 'fallback';
+    }
+
+    if (!responder) return;
+
+    const delayTyping = 1000 + Math.floor(Math.random() * 1500); // 1 to 2.5s typing delay
+    
+    setTimeout(() => {
+      // Show typing indicator
+      if (chatTypingIndicator) {
+        typingUserText.textContent = `${responder.name} is typing...`;
+        chatTypingIndicator.style.display = 'flex';
+        chatMessagesStream.scrollTop = chatMessagesStream.scrollHeight;
+      }
+
+      setTimeout(() => {
+        // Hide typing indicator
+        if (chatTypingIndicator) chatTypingIndicator.style.display = 'none';
+
+        // Add message log
+        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const replyText = responder.responses[triggerKey] || responder.responses['fallback'];
+        
+        state.chatLogs[state.activeChannel].push({
+          sender: responder.name,
+          avatar: responder.avatar,
+          message: replyText,
+          time: timeNow,
+          self: false
+        });
+
+        saveState();
+        renderChatMessages();
+
+        // Increment unread badge if not in tab
+        const activeTab = document.querySelector('.nav-tab.active');
+        if (activeTab && activeTab.getAttribute('data-tab') !== 'lobby') {
+          if (chatUnreadBadge) {
+            chatUnreadBadge.style.display = 'inline-block';
+            const count = parseInt(chatUnreadBadge.textContent) || 0;
+            chatUnreadBadge.textContent = count + 1;
+          }
+        }
+
+      }, 1500); // typing duration simulation
+
+    }, delayTyping);
+  }
+
+  // Periodically inject subtle background conversations to make room feel alive
+  function launchChatBackgroundSimulation() {
+    setInterval(() => {
+      const activeTab = document.querySelector('.nav-tab.active');
+      const isLobby = activeTab && activeTab.getAttribute('data-tab') === 'lobby';
+      
+      // 15% chance to post a background comment if the user is in general channel
+      if (Math.random() < 0.15) {
+        const poster = COMMUNITY_FANS[Math.floor(Math.random() * COMMUNITY_FANS.length)];
+        
+        // Pick a dynamic short message
+        const remarks = [
+          "Just finished reading Berserk. Absolute peak artwork.",
+          "Who else is hyped for the upcoming movie releases? 🍿",
+          "Hot take: Anime soundtracks can make a mid show look like 10/10.",
+          "I need a good action recommendation that isn't mainstream!",
+          "Currently listening to Neon Genesis soundtracks on repeat. Pure art.",
+          "Hope everyone has ranked their Top 5 list! Let's compare percentages."
+        ];
+        
+        const randomComment = remarks[Math.floor(Math.random() * remarks.length)];
+        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        state.chatLogs.general.push({
+          sender: poster.name,
+          avatar: poster.avatar,
+          message: randomComment,
+          time: timeNow,
+          self: false
+        });
+        
+        saveState();
+        
+        if (isLobby && state.activeChannel === 'general') {
+          renderChatMessages();
+        } else {
+          // Increment unread badge
+          if (chatUnreadBadge) {
+            chatUnreadBadge.style.display = 'inline-block';
+            const count = parseInt(chatUnreadBadge.textContent) || 0;
+            chatUnreadBadge.textContent = count + 1;
+          }
+        }
+      }
+    }, 30000); // Check every 30 seconds
+  }
+
+  launchChatBackgroundSimulation();
+
+
+  // ==========================================================================
+  // 9. ACTIVITY FEED & TICKERS
+  // ==========================================================================
+
+  // Log user activity into discover sidebar feed
+  function logActivity(activityHTML) {
+    if (!activityFeed) return;
+    
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    
+    const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.user.avatarSeed}&backgroundColor=ff007f`;
+
+    item.innerHTML = `
+      <div class="activity-avatar">
+        <img src="${avatarUrl}" alt="User">
+      </div>
+      <div class="activity-details">
+        <span>${activityHTML}</span>
+        <span class="activity-time">${timeNow}</span>
+      </div>
+    `;
+
+    activityFeed.insertBefore(item, activityFeed.firstChild);
+    
+    // Cap feed items
+    if (activityFeed.children.length > 8) {
+      activityFeed.lastChild.remove();
+    }
+  }
+
+  // Pre-seed some initial visual feeds
+  function preseedActivityFeed() {
+    if (!activityFeed) return;
+    activityFeed.innerHTML = '';
+    
+    const feeds = [
+      { name: "SakuraChan 🌸", action: "marked <strong>Spirited Away</strong> as Rank #1.", time: "20:30" },
+      { name: "GokuStan ⚡", action: "added <strong>Jujutsu Kaisen</strong> to their inventory.", time: "20:25" },
+      { name: "CodeGeassEnjoyer 👁️", action: "wrote an extensive comment on <strong>Death Note</strong>.", time: "20:11" },
+      { name: "CyberNeko 🐾", action: "synchronized their mal inventory listing.", time: "19:55" }
+    ];
+
+    feeds.forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'activity-item';
+      
+      const seed = f.name.replace(/[^a-zA-Z]/g, '');
+      const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&backgroundColor=00f0ff`;
+
+      item.innerHTML = `
+        <div class="activity-avatar">
+          <img src="${avatarUrl}" alt="${f.name}">
+        </div>
+        <div class="activity-details">
+          <span><strong class="activity-user">${f.name}</strong> ${f.action}</span>
+          <span class="activity-time">${f.time}</span>
+        </div>
+      `;
+      activityFeed.appendChild(item);
+    });
+  }
+
+  preseedActivityFeed();
+
+
+  // ==========================================================================
+  // 10. ANIME DETAILS MODAL AND COMMENTING SYSTEM
+  // ==========================================================================
+
+  // Build detail card content overlay
+  function openAnimeDetails(anime) {
+    if (!detailsModalContent) return;
+
+    const score = anime.score ? anime.score.toFixed(2) : 'N/A';
+    const rank = anime.rank || 'N/A';
+    const eps = anime.episodes ? `${anime.episodes} episodes` : 'Ongoing';
+    const status = anime.status || 'Unknown';
+    const studio = anime.studios ? anime.studios.map(s => s.name).join(', ') : 'MAL Standard';
+    const genresList = anime.genres ? anime.genres.map(g => `<span class="genre-pill">${g.name}</span>`).join('') : '';
+    const poster = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || '';
+    
+    // YouTube embed logic
+    let trailerHTML = `<div class="trailer-error-message">Trailer not available in public index</div>`;
+    if (anime.trailer && anime.trailer.embed_url) {
+      // Security sanitize embed URL
+      const embed = anime.trailer.embed_url;
+      trailerHTML = `<iframe src="${embed}" allowfullscreen></iframe>`;
+    }
+
+    // Load dynamic comments
+    const malId = anime.mal_id;
+    const comments = state.animeComments[malId] || [
+      { author: "SakuraChan 🌸", text: "Truly a remarkable show! Cried so much at the end 😭❤️", time: "2 days ago" },
+      { author: "CodeGeassEnjoyer 👁️", text: "Decent pacing, but the character motivations felt a bit contrived in episode 12.", time: "1 day ago" }
+    ];
+
+    const commentsHTML = comments.map(c => `
+      <div class="detail-review-item">
+        <div class="review-header">
+          <span class="review-author">${c.author}</span>
+          <span class="review-time">${c.time}</span>
+        </div>
+        <p class="review-body">${c.text}</p>
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="details-hero">
+        <div class="details-poster">
+          <img src="${poster}" alt="${anime.title}">
+        </div>
+        <div class="details-main-info">
+          <h1>${anime.title}</h1>
+          <div class="details-genres">${genresList}</div>
+          <p style="font-size: 0.8rem; color: var(--text-muted)">Studio: <strong>${studio}</strong> | Type: <strong>${anime.type || 'TV'}</strong></p>
+          
+          <div class="details-stats-row">
+            <div class="details-stat-box">
+              <span>MAL Score</span>
+              <strong class="stat-score">${score}</strong>
+            </div>
+            <div class="details-stat-box">
+              <span>Global Rank</span>
+              <strong class="stat-rank">#${rank}</strong>
+            </div>
+            <div class="details-stat-box">
+              <span>Status</span>
+              <strong style="color: var(--neon-pink); font-size: 0.75rem;">${status}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-block">
+        <h3>Story Summary</h3>
+        <p class="details-synopsis">${anime.synopsis || 'No summary available in public database index.'}</p>
+      </div>
+
+      <div class="details-block">
+        <h3>Promotional Trailer</h3>
+        <div class="trailer-placeholder">
+          ${trailerHTML}
+        </div>
+      </div>
+
+      <div class="details-block">
+        <h3>Fan Discussion (${comments.length})</h3>
+        <div class="details-discussion" id="modal-discussion-box">
+          ${commentsHTML}
+        </div>
+        
+        <div class="comment-input-area">
+          <textarea id="new-comment-textarea" placeholder="Add to the discussion... What did you think of this anime?"></textarea>
+          <button class="glass-btn btn-magenta" id="post-comment-btn" style="padding: 8px 16px; font-size: 0.8rem; align-self: flex-end;">Post Comment</button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:20px; border-top:1px solid var(--border-glass); padding-top:20px">
+        <button class="glass-btn btn-magenta" id="detail-add-rank-btn" style="flex:1">Rank This Anime</button>
+        <button class="glass-btn btn-secondary" id="detail-close-modal-btn">Close details</button>
+      </div>
+    `;
+
+    detailsModalContent.innerHTML = modalHTML;
+    detailsModal.classList.add('active');
+
+    // Attach inner actions
+    document.getElementById('detail-close-modal-btn').addEventListener('click', () => {
+      detailsModal.classList.remove('active');
+    });
+
+    document.getElementById('detail-add-rank-btn').addEventListener('click', () => {
+      addAnimeToInventory(anime);
+      detailsModal.classList.remove('active');
+      switchTab('ranker');
+    });
+
+    const postBtn = document.getElementById('post-comment-btn');
+    const commentArea = document.getElementById('new-comment-textarea');
+    postBtn.addEventListener('click', () => {
+      const val = commentArea.value.trim();
+      if (!val) return;
+
+      if (!state.animeComments[malId]) {
+        state.animeComments[malId] = comments; // preseed with initial mock reviews first
+      }
+
+      state.animeComments[malId].push({
+        author: `${state.user.username} (You)`,
+        text: val,
+        time: "Just now"
+      });
+
+      saveState();
+      
+      // Re-trigger details to render list
+      openAnimeDetails(anime);
+      showToast("Comment posted!", "success");
+      
+      logActivity(`You commented on <strong>${anime.title}</strong>: "${val.slice(0,35)}..."`);
+      gainXP(10);
+    });
+  }
+
+
+  // ==========================================================================
+  // 11. PROFILE SETTINGS CONTROLS
+  // ==========================================================================
+
+  // Populate avatar options inside form picker
+  function populateAvatarPicker() {
+    if (!avatarGridPicker) return;
+    avatarGridPicker.innerHTML = '';
+    
+    const seeds = ["JapaFanUser", "OtakuKing", "KawaiNeko", "MechaPilot", "ShonenHero", "CyberNinja"];
+    
+    seeds.forEach(seed => {
+      const div = document.createElement('div');
+      div.className = `avatar-picker-item ${state.user.avatarSeed === seed ? 'selected' : ''}`;
+      div.setAttribute('data-seed', seed);
+      
+      div.innerHTML = `
+        <img src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&backgroundColor=ff007f" alt="${seed}">
+      `;
+
+      div.addEventListener('click', () => {
+        document.querySelectorAll('.avatar-picker-item').forEach(item => item.classList.remove('selected'));
+        div.classList.add('selected');
+        selectedAvatarSeed.value = seed;
+      });
+
+      avatarGridPicker.appendChild(div);
+    });
+  }
+
+  // Pre-open profile form and seed fields
+  function openProfileSettings() {
+    profileUsernameInput.value = state.user.username;
+    profileBioInput.value = state.user.bio;
+    selectedAvatarSeed.value = state.user.avatarSeed;
+    populateAvatarPicker();
+
+    // Check pre-selected favorite genres
+    document.querySelectorAll('.genre-checkbox-pill').forEach(pill => {
+      const genreName = pill.getAttribute('data-genre');
+      if (state.user.favoriteGenres.includes(genreName)) {
+        pill.classList.add('selected');
+      } else {
+        pill.classList.remove('selected');
+      }
+    });
+
+    profileModal.classList.add('active');
+  }
+
+  // Handle genre multiselect toggles (max 3)
+  document.querySelectorAll('.genre-checkbox-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const selected = document.querySelectorAll('.genre-checkbox-pill.selected');
+      
+      if (pill.classList.contains('selected')) {
+        pill.classList.remove('selected');
+      } else {
+        if (selected.length >= 3) {
+          showToast("Maximum of 3 favorite genres allowed!", "info");
+          return;
+        }
+        pill.classList.add('selected');
+      }
+    });
+  });
+
+  // Save profile modifications
+  if (profileForm) {
+    profileForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const newUsername = profileUsernameInput.value.trim();
+      const newBio = profileBioInput.value.trim();
+      const newSeed = selectedAvatarSeed.value;
+
+      // Extract genres
+      const checkedGenres = [];
+      document.querySelectorAll('.genre-checkbox-pill.selected').forEach(pill => {
+        checkedGenres.push(pill.getAttribute('data-genre'));
+      });
+
+      state.user.username = newUsername || "OtakuGamer";
+      state.user.bio = newBio || "No bio yet.";
+      state.user.avatarSeed = newSeed;
+      state.user.favoriteGenres = checkedGenres;
+      
+      saveState();
+      updateGlobalProfileUI();
+      
+      profileModal.classList.remove('active');
+      showToast("Profile settings updated successfully!", "success");
+      
+      // Calculate taste summaries for matchmaker
+      renderUserTasteSummary();
+      renderCommunityMatches();
+    });
+  }
+
+  // Modal open triggers
+  if (openProfileBtn) openProfileBtn.addEventListener('click', openProfileSettings);
+  if (chatFooterProfileBtn) chatFooterProfileBtn.addEventListener('click', openProfileSettings);
+  if (closeProfileBtn) closeProfileBtn.addEventListener('click', () => profileModal.classList.remove('active'));
+  if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', () => profileModal.classList.remove('active'));
+
+
+  // ==========================================================================
+  // 12. NAVIGATION & TABS ENGINE
+  // ==========================================================================
+
+  function switchTab(tabId) {
+    // Nav bar active transitions
+    navTabs.forEach(tab => {
+      if (tab.getAttribute('data-tab') === tabId) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Body content tabs
+    tabContents.forEach(content => {
+      const cid = content.id.replace('tab-', '');
+      if (cid === tabId) {
+        content.classList.add('active');
+      } else {
+        content.classList.remove('active');
+      }
+    });
+
+    // Perform target refreshes when loading specific sections
+    if (tabId === 'discover') {
+      // Dynamic catalog
+    } else if (tabId === 'ranker') {
+      renderTierList();
+      renderInventoryShelf();
+    } else if (tabId === 'matchmaker') {
+      renderUserTasteSummary();
+      renderCommunityMatches();
+    } else if (tabId === 'lobby') {
+      renderChatMessages();
+      // Clear unread badge
+      if (chatUnreadBadge) {
+        chatUnreadBadge.style.display = 'none';
+        chatUnreadBadge.textContent = '0';
+      }
+    }
+  }
+
+  navTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabId = tab.getAttribute('data-tab');
+      switchTab(tabId);
+    });
+  });
+
+
+  // ==========================================================================
+  // 13. SELECTION & FILTER ACTION HANDLERS
+  // ==========================================================================
+
+  // Live discovering debouncer
+  let searchTimeout = null;
+  searchInput.addEventListener('input', () => {
+    const val = searchInput.value.trim();
+    
+    if (val.length === 0) {
+      clearSearchBtn.style.display = 'none';
+      searchDropdown.classList.remove('active');
+      return;
+    }
+    
+    clearSearchBtn.style.display = 'block';
+    
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+      const results = await searchAnimeQuery(val);
+      renderSearchDropdown(results);
+    }, 450); // 450ms debounce
+  });
+
+  // Clear search textbox
+  clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    searchDropdown.classList.remove('active');
+    searchInput.focus();
+  });
+
+  // Build search autocomplete dropdown list
+  function renderSearchDropdown(results) {
+    if (!searchDropdown) return;
+    searchDropdown.innerHTML = '';
+
+    if (results.length === 0) {
+      searchDropdown.innerHTML = '<div style="padding: 15px; color: var(--text-muted); font-size: 0.85rem; text-align: center;">No anime found. Try another query!</div>';
+      searchDropdown.classList.add('active');
+      return;
+    }
+
+    results.forEach(anime => {
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+      
+      const poster = anime.images?.jpg?.small_image_url || anime.images?.jpg?.image_url || '';
+      const year = anime.year ? `, ${anime.year}` : '';
+      const type = anime.type || 'TV';
+
+      item.innerHTML = `
+        <img src="${poster}" alt="${anime.title}">
+        <div class="search-result-info">
+          <span class="search-result-title">${anime.title}</span>
+          <span class="search-result-meta">${type}${year} | MAL Score: ${anime.score || 'N/A'}</span>
+        </div>
+      `;
+
+      item.addEventListener('click', () => {
+        searchDropdown.classList.remove('active');
+        searchInput.value = '';
+        clearSearchBtn.style.display = 'none';
+        openAnimeDetails(anime);
+      });
+
+      searchDropdown.appendChild(item);
+    });
+
+    searchDropdown.classList.add('active');
+  }
+
+  // Document click closes autocomplete dropdowns
+  document.addEventListener('click', (e) => {
+    if (searchDropdown && !e.target.closest('.search-bar-container')) {
+      searchDropdown.classList.remove('active');
+    }
+    if (inventoryDropdown && !e.target.closest('.inventory-search-box')) {
+      inventoryDropdown.classList.remove('active');
+    }
+  });
+
+  // Category filter pills
+  filterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      filterPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const filter = pill.getAttribute('data-filter');
+      fetchTrendingAnime(filter);
+    });
+  });
+
+
+  // ==========================================================================
+  // 14. RANKER WORKSPACE TEXTAREA & SHELF SEARCH
+  // ==========================================================================
+
+  // Save reflections note updates
+  noteInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      const rank = parseInt(input.getAttribute('data-rank'));
+      state.tierNotes[rank] = input.value.trim();
+      saveState();
+      showToast(`Rank ${rank} reflection notes saved!`, "success");
+    });
+  });
+
+  // Inner search for shelf selection
+  let invTimeout = null;
+  inventorySearch.addEventListener('input', () => {
+    const val = inventorySearch.value.trim();
+    if (val.length < 3) {
+      inventoryDropdown.classList.remove('active');
+      return;
+    }
+
+    clearTimeout(invTimeout);
+    invTimeout = setTimeout(async () => {
+      const results = await searchAnimeQuery(val);
+      renderInventoryDropdown(results);
+    }, 450);
+  });
+
+  // Render inventory search autocomplete items
+  function renderInventoryDropdown(results) {
+    if (!inventoryDropdown) return;
+    inventoryDropdown.innerHTML = '';
+
+    if (results.length === 0) {
+      inventoryDropdown.innerHTML = '<div style="padding: 10px; color: var(--text-muted); font-size: 0.8rem;">No results found.</div>';
+      inventoryDropdown.classList.add('active');
+      return;
+    }
+
+    results.forEach(anime => {
+      const item = document.createElement('div');
+      item.className = 'inventory-dropdown-item';
+      
+      const poster = anime.images?.jpg?.small_image_url || '';
+      const year = anime.year ? ` (${anime.year})` : '';
+
+      item.innerHTML = `
+        <img src="${poster}" alt="${anime.title}">
+        <span>${anime.title}${year}</span>
+      `;
+
+      item.addEventListener('click', () => {
+        inventoryDropdown.classList.remove('active');
+        inventorySearch.value = '';
+        addAnimeToInventory(anime);
+      });
+
+      inventoryDropdown.appendChild(item);
+    });
+
+    inventoryDropdown.classList.add('active');
+  }
+
+
+  // ==========================================================================
+  // 15. CHAT FORM ACTIONS
+  // ==========================================================================
+
+  // Send message on form submission
+  if (chatMessageForm) {
+    chatMessageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const text = chatMessageInput.value.trim();
+      if (!text) return;
+
+      const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.user.avatarSeed}&backgroundColor=ff007f`;
+
+      // Log messages
+      state.chatLogs[state.activeChannel].push({
+        sender: `${state.user.username} (You)`,
+        avatar: avatarUrl,
+        message: text,
+        time: timeNow,
+        self: true
+      });
+
+      saveState();
+      renderChatMessages();
+      
+      chatMessageInput.value = '';
+      chatMessageInput.focus();
+
+      // Trigger automatic reply sequences
+      simulateChatResponses(text);
+      gainXP(5);
+    });
+  }
+
+  // Switch chat channels
+  channelButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      channelButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const channel = btn.getAttribute('data-channel');
+      state.activeChannel = channel;
+      
+      // Update descriptors
+      const label = btn.querySelector('.channel-name').textContent;
+      const desc = btn.querySelector('.channel-desc').textContent;
+      
+      currentChannelTitle.textContent = label;
+      currentChannelDesc.textContent = desc;
+
+      renderChatMessages();
+    });
+  });
+
+
+  // ==========================================================================
+  // 16. EXPORT BADGE CARD MAKER
+  // ==========================================================================
+
+  // Generate visual badge representation code
+  function buildExportBadge() {
+    if (!otakuCardExport) return;
+    
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.user.avatarSeed}&backgroundColor=ff007f`;
+    
+    // Rank rows
+    let rankRowsHTML = '';
+    let hasRank = false;
+
+    for (let r = 1; r <= 5; r++) {
+      const anime = state.tierList[r];
+      if (anime) {
+        hasRank = true;
+        const note = state.tierNotes[r] ? ` - "${state.tierNotes[r].slice(0, 30)}..."` : '';
+        rankRowsHTML += `
+          <div class="badge-rank-item">
+            <span class="badge-rank-num r${r}">#${r}</span>
+            <div class="badge-rank-title">${anime.title}</div>
+          </div>
+        `;
+      }
+    }
+
+    if (!hasRank) {
+      rankRowsHTML = `
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 20px 0; border: 1px dashed var(--border-glass); border-radius: 8px; font-style: italic;">
+          No anime ranked on your board yet! Put titles in My Rank to build badge.
+        </div>
+      `;
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    otakuCardExport.innerHTML = `
+      <div class="badge-header">
+        <div class="badge-avatar">
+          <img src="${avatarUrl}" alt="Avatar">
+        </div>
+        <div class="badge-user-info">
+          <h3>${state.user.username}</h3>
+          <span>${state.user.level}</span>
+        </div>
+      </div>
+      <p class="badge-quote">"${state.user.bio || 'Anime is life.'}"</p>
+      
+      <div class="badge-rankings">
+        <h4>Top Series Rankings</h4>
+        <div class="badge-rank-list">
+          ${rankRowsHTML}
+        </div>
+      </div>
+
+      <div class="badge-footer">
+        <span>GENRES: ${state.user.favoriteGenres.join(', ') || 'General'}</span>
+        <span>JAPAFAN ID // ${currentYear}</span>
+      </div>
+    `;
+  }
+
+  // Copy share code
+  if (copyBadgeCodeBtn) {
+    copyBadgeCodeBtn.addEventListener('click', () => {
+      const shareCode = `[JapaFan Profile Badge: ${state.user.username} // Ranks: ${Object.values(state.tierList).filter(a=>a).map((a,i)=>`#${i+1}: ${a.title}`).join(', ') || 'Empty'}]`;
+      navigator.clipboard.writeText(shareCode).then(() => {
+        showToast("Badge details code copied to clipboard!", "success");
+      });
+    });
+  }
+
+  let selectedBadgeTheme = 'cyberpunk';
+  document.querySelectorAll('.theme-select-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.theme-select-pill').forEach(p => {
+        p.classList.remove('active');
+        p.style.borderColor = 'var(--border-glass)';
+        p.style.color = 'var(--text-muted)';
+      });
+      pill.classList.add('active');
+      selectedBadgeTheme = pill.getAttribute('data-theme');
+      
+      // Set indicator borders dynamically
+      if (selectedBadgeTheme === 'cyberpunk') {
+        pill.style.borderColor = 'var(--neon-cyan)';
+        pill.style.color = 'var(--neon-cyan)';
+      } else if (selectedBadgeTheme === 'retro') {
+        pill.style.borderColor = 'var(--neon-green)';
+        pill.style.color = 'var(--neon-green)';
+      } else if (selectedBadgeTheme === 'cozy') {
+        pill.style.borderColor = 'var(--neon-pink)';
+        pill.style.color = 'var(--neon-pink)';
+      }
+      
+      showToast(`Expressed theme: ${selectedBadgeTheme.toUpperCase()}`, "info");
+    });
+  });
+
+  if (downloadBadgeBtn) {
+    downloadBadgeBtn.addEventListener('click', () => {
+      showToast(`Generating ${selectedBadgeTheme} profile badge...`, "info");
+      const success = window.downloadBadgeImage(state, selectedBadgeTheme);
+      if (success) {
+        showToast("Profile badge downloaded successfully!", "success");
+      } else {
+        showToast("Error generating badge canvas.", "error");
+      }
+    });
+  }
+
+  // Trigger export model popup
+  if (exportBadgeBtn) {
+    exportBadgeBtn.addEventListener('click', () => {
+      buildExportBadge();
+      exportModal.classList.add('active');
+    });
+  }
+
+  if (closeExportBtn) {
+    closeExportBtn.addEventListener('click', () => {
+      exportModal.classList.remove('active');
+    });
+  }
+
+  // Global modals close on clicking backdrop overlay
+  window.addEventListener('click', (e) => {
+    if (e.target === detailsModal) detailsModal.classList.remove('active');
+    if (e.target === profileModal) profileModal.classList.remove('active');
+    if (e.target === exportModal) exportModal.classList.remove('active');
+    if (e.target === authModal) closeAuth();
+  });
+
+  if (closeDetailsBtn) {
+    closeDetailsBtn.addEventListener('click', () => {
+      detailsModal.classList.remove('active');
+    });
+  }
+
+  // Refresh matchmaking compatibility scores
+  if (refreshMatchesBtn) {
+    refreshMatchesBtn.addEventListener('click', () => {
+      showToast("Analyzing community overlaps...", "info");
+      renderCommunityMatches();
+    });
+  }
+
+
+  // ==========================================================================
+  // 17. SUPABASE AUTHENTICATION & CONNECTION HANDLERS
+  // ==========================================================================
+
+  const authModal = document.getElementById('auth-modal');
+  const connectCloudBtn = document.getElementById('connect-cloud-btn');
+  const closeAuthBtn = document.getElementById('close-auth-btn');
+  const cancelSigninBtn = document.getElementById('cancel-signin-btn');
+  const cancelSignupBtn = document.getElementById('cancel-signup-btn');
+  
+  const tabSigninTrigger = document.getElementById('tab-signin-trigger');
+  const tabSignupTrigger = document.getElementById('tab-signup-trigger');
+  const signinForm = document.getElementById('auth-signin-form');
+  const signupForm = document.getElementById('auth-signup-form');
+
+  // Real-time Supabase Auth Listener (captures Google and standard sessions)
+  if (supabaseService.initialized && supabaseService.client) {
+    supabaseService.client.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        console.log("Supabase Auth State Change: Logged in", event, session.user);
+        const user = session.user;
+        
+        // Sync our local user state
+        state.user.username = user.user_metadata?.username || user.user_metadata?.full_name || user.email.split('@')[0];
+        state.user.avatarSeed = user.user_metadata?.avatar_seed || `JapaFan-${state.user.username}`;
+        state.user.bio = user.user_metadata?.bio || "Cloud Authenticated Otaku // Ranks sync active.";
+        
+        // Hide connect cloud, show open profile
+        if (connectCloudBtn) connectCloudBtn.style.display = 'none';
+        if (openProfileBtn) openProfileBtn.style.display = 'flex';
+        
+        // Load additional custom profile details from database users table if any
+        try {
+          const profile = await supabaseService.getMyProfile();
+          if (profile) {
+            if (profile.username) state.user.username = profile.username;
+            if (profile.avatar_seed) state.user.avatarSeed = profile.avatar_seed;
+            if (profile.bio) state.user.bio = profile.bio;
+          }
+        } catch (err) {
+          console.warn("Could not fetch extended user profile details:", err.message);
+        }
+
+        // Determine if this is a Google Sign-in or Standard Cloud Sign-in
+        const isGoogle = user.app_metadata?.provider === 'google' || 
+                         (user.identities && user.identities.some(id => id.provider === 'google'));
+
+        if (isGoogle) {
+          if (!state.user.googleAuthAwarded) {
+            state.user.googleAuthAwarded = true;
+            gainXP(35); // +35 XP for Google authentication!
+            showToast("Authenticated via Google Sign In!", "success");
+          }
+        } else {
+          if (!state.user.cloudAuthAwarded) {
+            state.user.cloudAuthAwarded = true;
+            gainXP(25); // +25 XP for standard cloud auth link!
+            showToast("Synchronized with cloud database!", "success");
+          }
+        }
+
+        saveState();
+        updateGlobalProfileUI();
+      }
+    });
+  }
+
+  // Open Auth Modal
+  if (connectCloudBtn) {
+    connectCloudBtn.addEventListener('click', () => {
+      authModal.classList.add('active');
+    });
+  }
+
+  // Close Auth Modal
+  const closeAuth = () => {
+    if (authModal) authModal.classList.remove('active');
+  };
+  if (closeAuthBtn) closeAuthBtn.addEventListener('click', closeAuth);
+  if (cancelSigninBtn) cancelSigninBtn.addEventListener('click', closeAuth);
+  if (cancelSignupBtn) cancelSignupBtn.addEventListener('click', closeAuth);
+
+  // Sign In / Sign Up Form Tab Swaps
+  if (tabSigninTrigger && tabSignupTrigger) {
+    tabSigninTrigger.addEventListener('click', () => {
+      tabSigninTrigger.style.color = 'var(--neon-cyan)';
+      tabSigninTrigger.style.borderBottom = '2px solid var(--neon-cyan)';
+      tabSigninTrigger.style.fontWeight = '700';
+      
+      tabSignupTrigger.style.color = 'var(--text-muted)';
+      tabSignupTrigger.style.borderBottom = 'none';
+      tabSignupTrigger.style.fontWeight = '500';
+      
+      if (signinForm) signinForm.style.display = 'block';
+      if (signupForm) signupForm.style.display = 'none';
+    });
+
+    tabSignupTrigger.addEventListener('click', () => {
+      tabSignupTrigger.style.color = 'var(--neon-pink)';
+      tabSignupTrigger.style.borderBottom = '2px solid var(--neon-pink)';
+      tabSignupTrigger.style.fontWeight = '700';
+      
+      tabSigninTrigger.style.color = 'var(--text-muted)';
+      tabSigninTrigger.style.borderBottom = 'none';
+      tabSigninTrigger.style.fontWeight = '500';
+      
+      if (signinForm) signinForm.style.display = 'none';
+      if (signupForm) signupForm.style.display = 'block';
+    });
+  }
+
+  // Handle login inputs
+  if (signinForm) {
+    signinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('signin-email').value.trim();
+      const pass = document.getElementById('signin-password').value.trim();
+      
+      showToast("Verifying Cloud sync...", "info");
+      
+      if (supabaseService.initialized) {
+        const { error } = await supabaseService.signIn(email, pass);
+        if (error) {
+          showToast(`Signin failed: ${error}`, "error");
+        } else {
+          closeAuth();
+        }
+      } else {
+        setTimeout(() => {
+          state.user.username = email.split('@')[0];
+          state.user.bio = "Cloud Authenticated Otaku // Profile sync active.";
+          state.user.avatarSeed = `JapaFan-${state.user.username}`;
+          saveState();
+          
+          // Switch visual headers
+          if (connectCloudBtn) connectCloudBtn.style.display = 'none';
+          if (openProfileBtn) openProfileBtn.style.display = 'flex';
+          
+          updateGlobalProfileUI();
+          closeAuth();
+          showToast("Synchronized with cloud database!", "success");
+          if (!state.user.cloudAuthAwarded) {
+            state.user.cloudAuthAwarded = true;
+            gainXP(25); // Gain 25 XP for linking cloud!
+          }
+        }, 1000);
+      }
+    });
+  }
+
+  // Handle register inputs
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('signup-username').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const pass = document.getElementById('signup-password').value.trim();
+      
+      showToast("Registering account details...", "info");
+      
+      if (supabaseService.initialized) {
+        const { error } = await supabaseService.signUp(email, pass, username, `JapaFan-${username}`);
+        if (error) {
+          showToast(`Registration failed: ${error}`, "error");
+        } else {
+          showToast("Account created! Please check your email to verify.", "success");
+          closeAuth();
+        }
+      } else {
+        setTimeout(() => {
+          state.user.username = username;
+          state.user.bio = "Freshly registered Otaku // Profile sync active.";
+          state.user.avatarSeed = `JapaFan-${username}`;
+          saveState();
+          
+          if (connectCloudBtn) connectCloudBtn.style.display = 'none';
+          if (openProfileBtn) openProfileBtn.style.display = 'flex';
+          
+          updateGlobalProfileUI();
+          closeAuth();
+          showToast("Account created successfully!", "success");
+          if (!state.user.cloudAuthAwarded) {
+            state.user.cloudAuthAwarded = true;
+            gainXP(30); // Gain 30 XP for registering!
+          }
+        }, 1000);
+      }
+    });
+  }
+
+  // Handle Google OAuth Sign In
+  const googleLoginBtn = document.getElementById('google-login-btn');
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', async () => {
+      showToast("Redirecting to Google Secure Nodes...", "info");
+      
+      if (supabaseService.initialized) {
+        const { error } = await supabaseService.signInWithGoogle();
+        if (error) {
+          showToast(`Google Sign-In failed: ${error}`, "error");
+        }
+      } else {
+        setTimeout(() => {
+          state.user.username = "GoogleOtaku";
+          state.user.bio = "Securely linked with Google Account // Ranks sync active.";
+          state.user.avatarSeed = "JapaFan-GoogleUser";
+          saveState();
+          
+          if (connectCloudBtn) connectCloudBtn.style.display = 'none';
+          if (openProfileBtn) openProfileBtn.style.display = 'flex';
+          
+          updateGlobalProfileUI();
+          closeAuth();
+          showToast("Authenticated via Google Sign In!", "success");
+          if (!state.user.googleAuthAwarded) {
+            state.user.googleAuthAwarded = true;
+            gainXP(35); // Gain 35 XP for Google authentication!
+          }
+        }, 1200);
+      }
+    });
+  }
+
+
+  // ==========================================================================
+  // 18. INITIAL BOOTSTRAP INVOCATIONS
+  // ==========================================================================
+
+  // Perform initial system renders
+  updateGlobalProfileUI();
+  fetchTrendingAnime();
+  renderTierList();
+  renderInventoryShelf();
+
+});
