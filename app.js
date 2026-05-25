@@ -1978,12 +1978,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     searchDropdown.classList.add('active');
+    // Show backdrop to visually separate dropdown from card grid
+    const searchBackdrop = document.getElementById('search-backdrop');
+    if (searchBackdrop) searchBackdrop.classList.add('active');
   }
 
   // Document click closes autocomplete dropdowns
+  const _searchBackdrop = document.getElementById('search-backdrop');
+  function hideSearchDropdown() {
+    if (searchDropdown) searchDropdown.classList.remove('active');
+    if (_searchBackdrop) _searchBackdrop.classList.remove('active');
+  }
+  if (_searchBackdrop) _searchBackdrop.addEventListener('click', hideSearchDropdown);
+
   document.addEventListener('click', (e) => {
     if (searchDropdown && !e.target.closest('.search-bar-container')) {
-      searchDropdown.classList.remove('active');
+      hideSearchDropdown();
     }
     if (inventoryDropdown && !e.target.closest('.inventory-search-box')) {
       inventoryDropdown.classList.remove('active');
@@ -2681,8 +2691,10 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightSearchItem(searchHighlightIndex);
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (searchHighlightIndex >= 0 && items[searchHighlightIndex]) {
-          items[searchHighlightIndex].click();
+        // If nothing highlighted, fall back to first result
+        const targetIndex = searchHighlightIndex >= 0 ? searchHighlightIndex : 0;
+        if (items[targetIndex]) {
+          items[targetIndex].click();
           searchHighlightIndex = -1;
         }
       } else if (e.key === 'Escape') {

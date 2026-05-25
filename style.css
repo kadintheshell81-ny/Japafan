@@ -437,22 +437,33 @@ body {
 /* Search suggestions dropdown menu */
 .search-dropdown-menu {
   position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  width: 100%;
-  background: var(--bg-glass-heavy);
-  border: 1px solid var(--border-neon-cyan);
-  border-radius: 12px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), var(--shadow-neon-cyan);
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max(100%, 520px);
+  max-width: 680px;
+  background: rgba(8, 6, 18, 0.97);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(0, 240, 255, 0.08),
+    0 0 30px rgba(0, 240, 255, 0.12);
   z-index: 9999;
   overflow: hidden;
-  backdrop-filter: blur(20px);
-  max-height: 400px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  max-height: 420px;
   overflow-y: auto;
   display: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .search-dropdown-menu.active {
   display: block;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .search-result-item {
@@ -3773,5 +3784,21 @@ select:focus {
   background: rgba(0,240,255,0.15);
   box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 18px rgba(0,240,255,0.3);
   transform: translateY(-2px) scale(1.05);
+}
+
+
+/* Search active backdrop - dims content below dropdown */
+.search-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9998;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition: opacity 0.2s ease;
+}
+.search-backdrop.active {
+  display: block;
 }
 
