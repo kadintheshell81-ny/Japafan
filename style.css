@@ -1,4 +1,4 @@
-/* ==========================================================================
+ï»¿/* ==========================================================================
    JAPAFAN DESIGN SYSTEM - NEON GLASSMORPHISM
    ========================================================================== */
 
@@ -352,7 +352,7 @@ body {
   margin-bottom: 40px;
   backdrop-filter: blur(10px);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 .discover-hero::before {
@@ -393,6 +393,7 @@ body {
   width: 100%;
   max-width: 600px;
   position: relative;
+  overflow: visible;
   transition: var(--transition-smooth);
 }
 .search-bar-container:focus-within {
@@ -443,7 +444,7 @@ body {
   border: 1px solid var(--border-neon-cyan);
   border-radius: 12px;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), var(--shadow-neon-cyan);
-  z-index: 100;
+  z-index: 9999;
   overflow: hidden;
   backdrop-filter: blur(20px);
   max-height: 400px;
@@ -2688,7 +2689,7 @@ select:focus {
 .search-result-item.keyboard-highlighted { background: rgba(0, 240, 255, 0.1) !important; border-left: 3px solid var(--neon-cyan) !important; padding-left: 13px !important; }
 
 /* ========================================================================== */
-/* PHASE 2 — SKELETON LOADERS                                                 */
+/* PHASE 2 ï¿½ SKELETON LOADERS                                                 */
 /* ========================================================================== */
 
 @keyframes skeleton-shimmer {
@@ -2732,7 +2733,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 2 — UPGRADED ANIME CARDS WITH HOVER OVERLAY                         */
+/* PHASE 2 ï¿½ UPGRADED ANIME CARDS WITH HOVER OVERLAY                         */
 /* ========================================================================== */
 
 .anime-card {
@@ -2782,7 +2783,7 @@ select:focus {
   border: 1px solid var(--border-glass);
 }
 
-/* Hover overlay — slides up from bottom */
+/* Hover overlay ï¿½ slides up from bottom */
 .anime-card-hover-overlay {
   position: absolute;
   bottom: 0;
@@ -2861,7 +2862,7 @@ select:focus {
 .anime-card-action-overlay { display: none; }
 
 /* ========================================================================== */
-/* PHASE 2 — RICH SEARCH RESULT CARDS                                        */
+/* PHASE 2 ï¿½ RICH SEARCH RESULT CARDS                                        */
 /* ========================================================================== */
 
 .search-result-poster {
@@ -2919,7 +2920,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 2 — EMPTY STATES                                                    */
+/* PHASE 2 ï¿½ EMPTY STATES                                                    */
 /* ========================================================================== */
 
 .empty-state {
@@ -2971,7 +2972,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 2 — CHAT SCROLL-TO-BOTTOM BUTTON                                    */
+/* PHASE 2 ï¿½ CHAT SCROLL-TO-BOTTOM BUTTON                                    */
 /* ========================================================================== */
 
 .chat-scroll-bottom {
@@ -3004,7 +3005,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — RICH TOAST NOTIFICATION SYSTEM                                   */
+/* PHASE 3 ï¿½ RICH TOAST NOTIFICATION SYSTEM                                   */
 /* ========================================================================== */
 
 .toast-container {
@@ -3088,7 +3089,7 @@ select:focus {
 .toast-close:hover { color: var(--text-main); }
 
 /* ========================================================================== */
-/* PHASE 3 — DESTRUCTIVE CONFIRM BUTTON                                       */
+/* PHASE 3 ï¿½ DESTRUCTIVE CONFIRM BUTTON                                       */
 /* ========================================================================== */
 
 .ranked-item-remove {
@@ -3113,7 +3114,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — SMOOTH TAB FADE TRANSITIONS                                      */
+/* PHASE 3 ï¿½ SMOOTH TAB FADE TRANSITIONS                                      */
 /* ========================================================================== */
 
 .tab-content {
@@ -3136,7 +3137,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — RANK DROP ZONE PULSE ANIMATION                                   */
+/* PHASE 3 ï¿½ RANK DROP ZONE PULSE ANIMATION                                   */
 /* ========================================================================== */
 
 @keyframes rank-pulse-glow {
@@ -3150,7 +3151,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — BUTTON MICRO-ANIMATIONS                                          */
+/* PHASE 3 ï¿½ BUTTON MICRO-ANIMATIONS                                          */
 /* ========================================================================== */
 
 .glass-btn {
@@ -3202,7 +3203,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — IMPROVED ANIME CARD HOVER LIFT                                   */
+/* PHASE 3 ï¿½ IMPROVED ANIME CARD HOVER LIFT                                   */
 /* ========================================================================== */
 
 .anime-card {
@@ -3217,7 +3218,7 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — LEVEL UP CELEBRATION FLASH                                       */
+/* PHASE 3 ï¿½ LEVEL UP CELEBRATION FLASH                                       */
 /* ========================================================================== */
 
 @keyframes levelup-flash {
@@ -3231,11 +3232,12 @@ select:focus {
 }
 
 /* ========================================================================== */
-/* PHASE 3 — SLASH KEYBOARD SHORTCUT HINT IN SEARCH                          */
+/* PHASE 3 ï¿½ SLASH KEYBOARD SHORTCUT HINT IN SEARCH                          */
 /* ========================================================================== */
 
 .search-bar-container {
   position: relative;
+  overflow: visible;
 }
 
 .search-slash-hint {
