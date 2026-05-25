@@ -1,4 +1,4 @@
-﻿import { supabaseService } from './supabase-client.js';
+import { supabaseService } from './supabase-client.js';
 
 import {
   initAOS,
@@ -325,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (parsed.inventory) state.inventory = parsed.inventory;
         if (parsed.animeComments) state.animeComments = parsed.animeComments;
         if (parsed.chatLogs) state.chatLogs = parsed.chatLogs;
+        if (parsed.notifications) state.notifications = parsed.notifications;
       } catch (e) {
         console.error("Error loading local storage state: ", e);
       }
@@ -345,7 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
       tierNotes: state.tierNotes,
       inventory: state.inventory,
       animeComments: state.animeComments,
-      chatLogs: state.chatLogs
+      chatLogs: state.chatLogs,
+      notifications: state.notifications
     }));
   }
 
@@ -539,6 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newLevel > oldLevel) {
       showToast(`LEVEL UP! You are now a ${state.user.level}! 🎉`, "success");
       logActivity(`<strong>LEVEL UP!</strong> You reached ${state.user.level}!`);
+      addNotification('levelup', `Level Up! You are now ${state.user.level}! 🎉`);
     }
   }
 
@@ -724,6 +727,10 @@ document.addEventListener('DOMContentLoaded', () => {
         url += '&type=movie';
       } else if (filter === 'tv') {
         url += '&type=tv';
+      } else if (filter === 'ova') {
+        url += '&type=ova';
+      } else if (filter === 'score') {
+        url += '&order_by=score&sort=desc';
       }
 
       const response = await fetch(url);
@@ -1220,7 +1227,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
           <div class="compatibility-meter">
-            <span class="percent-number">${fan.scorePercent}%</span>
+            <div class="match-compatibility-ring">
+              <span class="match-compat-value" data-target="${fan.scorePercent}">${fan.scorePercent}%</span>
+            </div>
             <span class="percent-label">Match</span>
           </div>
         </div>
@@ -1232,6 +1241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="match-card-actions">
           <button class="match-action-btn compare-btn">Compare</button>
           <button class="match-action-btn chat-btn">Chat Lobby</button>
+          <button class="match-send-msg-btn" data-user="${fan.name}">💬 Message</button>
         </div>
       `;
 
@@ -1249,7 +1259,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
+      card.querySelector('.match-send-msg-btn').addEventListener('click', () => {
+        const username = fan.name;
+        switchTab('lobby');
+        if (chatMessageInput) {
+          chatMessageInput.value = `@${username} `;
+          chatMessageInput.focus();
+        }
+      });
+
       matchesGrid.appendChild(card);
+    });
+
+    // Animate compatibility percentages with GSAP countUp
+    document.querySelectorAll('.match-compat-value').forEach(el => {
+      const target = parseInt(el.dataset.target || el.textContent);
+      el.textContent = '0%';
+      if (typeof gsap !== 'undefined') {
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: target,
+          duration: 1.2,
+          ease: 'power2.out',
+          delay: 0.3,
+          onUpdate: () => { el.textContent = Math.round(obj.val) + '%'; },
+        });
+      } else {
+        el.textContent = target + '%';
+      }
     });
   }
 
@@ -1953,15 +1990,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Animated sliding pill indicator
+  function updateFilterPill(activeBtn) {
+    const track = document.getElementById('filter-pill-track');
+    const pill  = document.getElementById('filter-active-pill');
+    if (!track || !pill || !activeBtn) return;
+    const trackRect = track.getBoundingClientRect();
+    const btnRect   = activeBtn.getBoundingClientRect();
+    const leftPos   = btnRect.left - trackRect.left;
+    if (typeof gsap !== 'undefined') {
+      gsap.to(pill, { x: leftPos, width: btnRect.width, duration: 0.28, ease: 'power2.out' });
+    } else {
+      pill.style.cssText += `;transform:translateX(${leftPos}px);width:${btnRect.width}px`;
+    }
+  }
+
   // Category filter pills
   filterPills.forEach(pill => {
     pill.addEventListener('click', () => {
       filterPills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
+      updateFilterPill(pill);
       const filter = pill.getAttribute('data-filter');
       fetchTrendingAnime(filter);
     });
   });
+
+  // Init pill position on first render
+  setTimeout(() => {
+    const activePill = document.querySelector('.filter-pill.active');
+    if (activePill) updateFilterPill(activePill);
+  }, 400);
 
 
   // ==========================================================================
@@ -2729,5 +2788,271 @@ document.addEventListener('DOMContentLoaded', () => {
       sbc.appendChild(hint);
     }
   })();
+
+
+  // ==========================================================================
+  // PHASE 4.4 + 4.5 — BACK-TO-TOP + FILTER PILL INIT
+  // ==========================================================================
+
+  const backToTopBtn = document.getElementById('back-to-top-btn');
+
+  function initBackToTop() {
+    if (!backToTopBtn) return;
+    var mainEl = document.querySelector('main') || document.documentElement;
+
+    window.addEventListener('scroll', function() {
+      var scrollY = window.scrollY || window.pageYOffset;
+      if (scrollY > 400) {
+        backToTopBtn.classList.add('visible');
+      } else {
+        backToTopBtn.classList.remove('visible');
+      }
+    }, { passive: true });
+
+    backToTopBtn.addEventListener('click', function() {
+      if (typeof gsap !== 'undefined' && gsap.plugins && gsap.plugins.scrollTo) {
+        gsap.to(window, { scrollTo: 0, duration: 0.8, ease: 'power2.inOut' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+
+  initBackToTop();
+
+  // ==========================================================================
+  // PHASE 4.2 — PUBLIC PROFILE PAGES (hash routing)
+  // ==========================================================================
+
+  function renderPublicProfile(profileData) {
+    // profileData: { username, level, xp, avatarSeed, tierList, genres }
+    const xp  = profileData.xp || 0;
+    const pct = Math.round((xp % 100));
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${profileData.avatarSeed || profileData.username}&backgroundColor=ff007f`;
+
+    const pvAvatar    = document.getElementById('pv-avatar');
+    const pvUsername  = document.getElementById('pv-username');
+    const pvLevel     = document.getElementById('pv-level');
+    const pvXpCount   = document.getElementById('pv-xp-count');
+    const pvXpPct     = document.getElementById('pv-xp-pct');
+    const pvXpFill    = document.getElementById('pv-xp-fill');
+    const pvRankings  = document.getElementById('pv-rankings');
+    const pvGenres    = document.getElementById('pv-genres');
+
+    if (pvAvatar)   pvAvatar.src              = avatarUrl;
+    if (pvUsername) pvUsername.textContent     = profileData.username || 'OtakuFan';
+    if (pvLevel)    pvLevel.textContent        = profileData.level    || 'Lv.1 Trainee';
+    if (pvXpCount)  pvXpCount.textContent      = `${xp} XP`;
+    if (pvXpPct)    pvXpPct.textContent        = `${pct}%`;
+
+    // Animate XP bar
+    if (pvXpFill) {
+      pvXpFill.style.width = '0%';
+      setTimeout(() => { pvXpFill.style.width = `${pct}%`; }, 200);
+    }
+
+    // Rankings grid
+    if (pvRankings) {
+      const tierList = profileData.tierList || {};
+      const ranked = Object.entries(tierList).filter(([, v]) => v).slice(0, 5);
+      pvRankings.innerHTML = ranked.length
+        ? ranked.map(([rank, anime]) => {
+            const poster = anime.images?.jpg?.image_url || '';
+            return `<div class="pv-rank-item"><span class="pv-rank-num">#${rank}</span><img src="${poster}" alt="${anime.title}" title="${anime.title}"></div>`;
+          }).join('')
+        : '<p class="pv-empty">No rankings yet.</p>';
+    }
+
+    // Genre tags
+    if (pvGenres) {
+      const genres = profileData.genres || [];
+      pvGenres.innerHTML = genres.slice(0, 8).map(g =>
+        `<span class="pv-genre-tag">${g.name || g}</span>`
+      ).join('') || '<p class="pv-empty">No genre data.</p>';
+    }
+
+    // Show profile view
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    const pvTab = document.getElementById('tab-profile');
+    if (pvTab) { pvTab.style.display = 'block'; pvTab.classList.add('active'); }
+  }
+
+  function showMyPublicProfile() {
+    // Build profile data from current state
+    const genres = Object.entries(state.genreTaste || {}).map(([name, count]) => ({ name, count })).sort((a,b) => b.count - a.count);
+    renderPublicProfile({
+      username:   state.user.username,
+      level:      state.user.level,
+      xp:         state.user.xp,
+      avatarSeed: state.user.avatarSeed,
+      tierList:   state.tierList,
+      genres,
+    });
+  }
+
+  // Hash routing: #profile → show own profile
+  function handleHashChange() {
+    const hash = window.location.hash;
+    if (hash === '#profile' || hash === '#profile/me') {
+      showMyPublicProfile();
+    }
+  }
+  window.addEventListener('hashchange', handleHashChange);
+
+  // Profile view back button
+  const profileViewBackBtn = document.getElementById('profile-view-back');
+  if (profileViewBackBtn) {
+    profileViewBackBtn.addEventListener('click', () => {
+      const pvTab = document.getElementById('tab-profile');
+      if (pvTab) { pvTab.style.display = 'none'; pvTab.classList.remove('active'); }
+      window.history.replaceState(null, '', window.location.pathname);
+      switchTab('discover');
+    });
+  }
+
+  // Share button
+  const pvShareBtn = document.getElementById('pv-share-btn');
+  if (pvShareBtn) {
+    pvShareBtn.addEventListener('click', () => {
+      const url = window.location.origin + window.location.pathname + '#profile';
+      navigator.clipboard?.writeText(url).then(() => showToast('Profile link copied!', 'success'));
+    });
+  }
+
+  // Wire dropdown "Edit Profile" to show own profile
+  const dropdownMyRankBtn = document.getElementById('dropdown-my-rank');
+  // (already wired in Phase 1 — keep as is)
+
+  // ==========================================================================
+  // PHASE 4.1 — NOTIFICATION CENTER
+  // ==========================================================================
+
+  const NOTIF_TYPES = {
+    levelup:  { icon: '🏆', color: 'var(--neon-purple)' },
+    xp:       { icon: '⚡', color: 'var(--neon-cyan)' },
+    chat:     { icon: '💬', color: 'var(--neon-green)' },
+    match:    { icon: '🎯', color: 'var(--neon-pink)' },
+    trending: { icon: '🔥', color: '#f59e0b' },
+    system:   { icon: '⚙️', color: 'var(--text-muted)' },
+  };
+
+  const notifBellBtn     = document.getElementById('notif-bell-btn');
+  const notifUnreadBadge = document.getElementById('notif-unread-badge');
+  const notifPanel       = document.getElementById('notif-panel');
+  const notifBackdrop    = document.getElementById('notif-backdrop');
+  const notifList        = document.getElementById('notif-list');
+  const notifMarkAllBtn  = document.getElementById('notif-mark-all-btn');
+  const notifCloseBtn    = document.getElementById('notif-close-btn');
+
+  // Notifications stored in state
+  if (!state.notifications) state.notifications = [];
+
+  function addNotification(type, message, link) {
+    const notif = {
+      id:      Date.now(),
+      type:    type || 'system',
+      message: message,
+      link:    link || null,
+      read:    false,
+      time:    new Date().toISOString(),
+    };
+    state.notifications.unshift(notif);
+    if (state.notifications.length > 20) state.notifications = state.notifications.slice(0, 20);
+    saveState();
+    renderNotifications();
+    updateNotifBadge();
+    // Ring the bell
+    if (notifBellBtn) {
+      notifBellBtn.classList.add('notif-bell-ring');
+      setTimeout(() => notifBellBtn.classList.remove('notif-bell-ring'), 700);
+    }
+  }
+
+  function updateNotifBadge() {
+    const unread = state.notifications.filter(n => !n.read).length;
+    if (notifUnreadBadge) {
+      notifUnreadBadge.textContent = unread > 9 ? '9+' : unread;
+      notifUnreadBadge.style.display = unread > 0 ? 'flex' : 'none';
+    }
+  }
+
+  function renderNotifications() {
+    if (!notifList) return;
+    if (!state.notifications.length) {
+      notifList.innerHTML = '<div class="notif-empty-state"><span class="notif-empty-icon">🔔</span><p>No notifications yet</p></div>';
+      return;
+    }
+    notifList.innerHTML = state.notifications.map(n => {
+      const t = NOTIF_TYPES[n.type] || NOTIF_TYPES.system;
+      return `
+        <div class="notif-item ${n.read ? 'notif-read' : 'notif-unread'}" data-id="${n.id}">
+          <span class="notif-item-icon" style="color:${t.color}">${t.icon}</span>
+          <div class="notif-item-body">
+            <p class="notif-item-msg">${n.message}</p>
+            <span class="notif-item-time">${timeAgo(new Date(n.time))}</span>
+          </div>
+          ${!n.read ? '<span class="notif-unread-dot"></span>' : ''}
+        </div>`;
+    }).join('');
+
+    // Mark as read on click
+    notifList.querySelectorAll('.notif-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = parseInt(el.dataset.id);
+        const notif = state.notifications.find(n => n.id === id);
+        if (notif) { notif.read = true; saveState(); renderNotifications(); updateNotifBadge(); }
+      });
+    });
+  }
+
+  function openNotifPanel() {
+    if (!notifPanel) return;
+    notifPanel.classList.add('open');
+    notifBackdrop.classList.add('open');
+    notifBellBtn.setAttribute('aria-expanded', 'true');
+    notifPanel.setAttribute('aria-hidden', 'false');
+    // GSAP slide in from right
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(notifPanel, { x: 320, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: 'power3.out' });
+    }
+    renderNotifications();
+  }
+
+  function closeNotifPanel() {
+    if (!notifPanel) return;
+    if (typeof gsap !== 'undefined') {
+      gsap.to(notifPanel, { x: 320, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => {
+        notifPanel.classList.remove('open');
+        notifBackdrop.classList.remove('open');
+      }});
+    } else {
+      notifPanel.classList.remove('open');
+      notifBackdrop.classList.remove('open');
+    }
+    notifBellBtn.setAttribute('aria-expanded', 'false');
+    notifPanel.setAttribute('aria-hidden', 'true');
+  }
+
+  if (notifBellBtn) notifBellBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notifPanel.classList.contains('open') ? closeNotifPanel() : openNotifPanel();
+  });
+  if (notifCloseBtn)  notifCloseBtn.addEventListener('click', closeNotifPanel);
+  if (notifBackdrop)  notifBackdrop.addEventListener('click', closeNotifPanel);
+  if (notifMarkAllBtn) notifMarkAllBtn.addEventListener('click', () => {
+    state.notifications.forEach(n => n.read = true);
+    saveState();
+    renderNotifications();
+    updateNotifBadge();
+  });
+
+  // Wire into existing events: level up, XP, chat
+  // Seed welcome notification on first load
+  if (!state.notifications.length) {
+    addNotification('system', 'Welcome to JapaFan! Explore trending anime and build your tier list.');
+  }
+
+  // Initialize badge
+  updateNotifBadge();
 
 });

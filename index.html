@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -68,6 +68,17 @@
 
       <!-- Profile Quick Actions -->
       <div class="header-actions" style="display: flex; gap: 10px; align-items: center; position: relative;">
+
+        <!-- Notification Bell -->
+        <div class="notif-bell-wrapper" id="notif-bell-wrapper">
+          <button class="notif-bell-btn" id="notif-bell-btn" aria-label="Notifications" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notif-unread-badge" id="notif-unread-badge" style="display:none">0</span>
+          </button>
+        </div>
 
         <!-- Shown when logged OUT -->
         <button id="connect-cloud-btn" class="glass-btn btn-cyan header-connect-btn">
@@ -161,9 +172,14 @@
             <div class="section-title-bar">
               <h2>Trending Season Favorites</h2>
               <div class="filter-pills">
-                <button class="filter-pill active" data-filter="all">All</button>
-                <button class="filter-pill" data-filter="tv">TV</button>
-                <button class="filter-pill" data-filter="movie">Movies</button>
+                <div class="filter-pill-track" id="filter-pill-track">
+                  <div class="filter-active-pill" id="filter-active-pill"></div>
+                  <button class="filter-pill active" data-filter="all">All</button>
+                  <button class="filter-pill" data-filter="tv">TV Series</button>
+                  <button class="filter-pill" data-filter="movie">Movies</button>
+                  <button class="filter-pill" data-filter="ova">OVA</button>
+                  <button class="filter-pill" data-filter="score">Top Rated</button>
+                </div>
               </div>
             </div>
             
@@ -449,6 +465,41 @@
         </div>
       </section>
 
+      <!-- Public Profile View (hash routing) -->
+      <div class="tab-content profile-view" id="tab-profile" style="display:none;">
+        <div class="profile-view-inner">
+          <button class="profile-view-back" id="profile-view-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <div class="profile-view-card">
+            <div class="profile-view-header">
+              <img class="profile-view-avatar" id="pv-avatar" src="" alt="">
+              <div class="profile-view-identity">
+                <h2 class="profile-view-username" id="pv-username">—</h2>
+                <span class="profile-view-level" id="pv-level">—</span>
+              </div>
+              <button class="profile-view-share-btn" id="pv-share-btn" title="Copy profile link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share
+              </button>
+            </div>
+            <div class="profile-view-xp">
+              <div class="profile-view-xp-label"><span id="pv-xp-count">0 XP</span><span id="pv-xp-pct">0%</span></div>
+              <div class="profile-view-xp-bar"><div class="profile-view-xp-fill" id="pv-xp-fill"></div></div>
+            </div>
+            <div class="profile-view-section">
+              <h3 class="profile-view-section-title">🏆 Top Rankings</h3>
+              <div class="profile-view-rankings" id="pv-rankings"></div>
+            </div>
+            <div class="profile-view-section">
+              <h3 class="profile-view-section-title">🎭 Genre Taste</h3>
+              <div class="profile-view-genres" id="pv-genres"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <!-- App Footer -->
@@ -631,5 +682,30 @@
   <!-- Japafan SPA Engines -->
   <script type="module" src="badge-exporter.js"></script>
   <script type="module" src="app.js"></script>
+  <!-- Back to Top -->
+  <button class="back-to-top-btn" id="back-to-top-btn" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <!-- Notification Panel -->
+  <div class="notif-panel" id="notif-panel" aria-hidden="true">
+    <div class="notif-panel-header">
+      <h3 class="notif-panel-title">Notifications</h3>
+      <div class="notif-panel-actions">
+        <button class="notif-mark-all-btn" id="notif-mark-all-btn">Mark all read</button>
+        <button class="notif-close-btn" id="notif-close-btn" aria-label="Close notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <div class="notif-empty-state">
+        <span class="notif-empty-icon">🔔</span>
+        <p>No notifications yet</p>
+      </div>
+    </div>
+  </div>
+  <div class="notif-backdrop" id="notif-backdrop"></div>
+
 </body>
 </html>
