@@ -685,26 +685,40 @@ document.addEventListener('DOMContentLoaded', () => {
       return state.apiCache[cacheKey];
     }
 
+    // Level 1: Server-side cache proxy
     try {
-      // Route through server-side cache proxy to avoid Jikan 3 req/s rate limits
-      const response = await fetch(`/api/jikan-proxy?endpoint=search&q=${encodeURIComponent(query)}`);
-      if (!response.ok) throw new Error("Search API error / rate limit");
-      const json = await response.json();
-      
-      if (json.data) {
-        state.apiCache[cacheKey] = json.data;
-        return json.data;
+      const proxyRes = await fetch(`/api/jikan-proxy?endpoint=search&q=${encodeURIComponent(query)}`);
+      if (proxyRes.ok) {
+        const json = await proxyRes.json();
+        if (json.data && json.data.length > 0) {
+          state.apiCache[cacheKey] = json.data;
+          return json.data;
+        }
       }
-      return [];
     } catch (e) {
-      console.warn("Jikan search error. Matching local fallback data...", e);
-      // Fallback search matching in local array
-      const term = query.toLowerCase();
-      return LOCAL_FALLBACK_ANIME.filter(a => 
-        a.title.toLowerCase().includes(term) || 
-        a.genres.some(g => g.name.toLowerCase().includes(term))
-      );
+      console.warn('[Search] Proxy unavailable, trying direct Jikan...', e.message);
     }
+
+    // Level 2: Direct Jikan API fallback
+    try {
+      const jikanRes = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=10&sfw=true`);
+      if (jikanRes.ok) {
+        const json = await jikanRes.json();
+        if (json.data && json.data.length > 0) {
+          state.apiCache[cacheKey] = json.data;
+          return json.data;
+        }
+      }
+    } catch (e) {
+      console.warn('[Search] Jikan also failed, using local data...', e.message);
+    }
+
+    // Level 3: Local fallback
+    const term = query.toLowerCase();
+    return LOCAL_FALLBACK_ANIME.filter(a =>
+      a.title.toLowerCase().includes(term) ||
+      a.genres.some(g => g.name.toLowerCase().includes(term))
+    );
   }
 
 
