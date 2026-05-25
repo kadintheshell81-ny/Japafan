@@ -2420,3 +2420,77 @@ body {
     justify-content: center;
   }
 }
+
+/* ========================================================================== */
+/* POLISH - UNIFIED INPUT FOCUS GLOW */
+/* ========================================================================== */
+
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 0 2px rgba(var(--neon-cyan-rgb), 0.25), 0 0 18px rgba(var(--neon-cyan-rgb), 0.2), inset 0 0 8px rgba(var(--neon-cyan-rgb), 0.05) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input-group input:focus,
+.form-input-group textarea:focus {
+  border-color: var(--neon-pink) !important;
+  box-shadow: 0 0 0 2px rgba(var(--neon-pink-rgb), 0.25), 0 0 18px rgba(var(--neon-pink-rgb), 0.2) !important;
+}
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tab-panel.active {
+  animation: tabFadeIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+
+/* ========================================================================== */
+/* RESPONSIVE - MOBILE 768px                                                  */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+  .app-container { padding: 0 12px; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .app-nav { gap: 2px; padding: 3px; }
+  .nav-tab { padding: 8px 10px; font-size: 0.75rem; gap: 4px; min-height: 44px; }
+  .anime-catalog-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .discover-grid-layout { grid-template-columns: 1fr; gap: 16px; }
+  .live-activity-aside { display: none; }
+  .ranker-workspace { grid-template-columns: 1fr; gap: 16px; }
+  .tier-row { grid-template-columns: 60px 1fr; min-height: 80px; }
+  .matchmaker-split-view { grid-template-columns: 1fr; gap: 16px; }
+  .matches-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .lobby-channels-sidebar { height: 120px; flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+  .channel-item { min-width: 140px; flex-shrink: 0; }
+  .lobby-chat-window { height: 400px; }
+  .modal-panel, .details-modal-content { width: 95vw; max-width: 100%; max-height: 90vh; padding: 20px; }
+  .details-hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .glass-card { padding: 16px; }
+  .glass-btn { min-height: 44px; }
+}
+
+/* ========================================================================== */
+/* RESPONSIVE - SMALL MOBILE 480px                                            */
+/* ========================================================================== */
+
+@media (max-width: 480px) {
+  .app-logo { font-size: 1.2rem; }
+  .header-status-pill { display: none; }
+  .nav-tab .tab-label { display: none; }
+  .nav-tab { padding: 10px 14px; }
+  .nav-tab .tab-icon { font-size: 1.2rem; }
+  .anime-catalog-grid { grid-template-columns: 1fr; }
+  .matches-grid { grid-template-columns: 1fr; }
+  .lobby-chat-window { height: 350px; }
+  .chat-msg-bubble { font-size: 0.85rem; padding: 8px 12px; }
+  .profile-avatar-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .modal-panel, .details-modal-content { width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; padding: 16px; }
+}

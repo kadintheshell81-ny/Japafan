@@ -640,7 +640,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      let url = 'https://api.jikan.moe/v4/top/anime?limit=12';
+      // Route through server-side cache proxy to avoid Jikan 3 req/s rate limits
+      let url = '/api/jikan-proxy?endpoint=top_anime';
       if (filter === 'movie') {
         url += '&type=movie';
       } else if (filter === 'tv') {
@@ -685,7 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=6`);
+      // Route through server-side cache proxy to avoid Jikan 3 req/s rate limits
+      const response = await fetch(`/api/jikan-proxy?endpoint=search&q=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error("Search API error / rate limit");
       const json = await response.json();
       
@@ -1908,7 +1910,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       saveState();
       renderChatMessages();
-      
+
+      // Sync to Supabase real-time chat (non-blocking — local-first)
+      if (supabaseService.initialized) {
+        supabaseService.sendChatMessage(state.activeChannel, text)
+          .catch(err => console.warn('[Chat] Supabase sync failed:', err));
+      }
+
       chatMessageInput.value = '';
       chatMessageInput.focus();
 
