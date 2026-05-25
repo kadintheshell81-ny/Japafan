@@ -2676,7 +2676,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (searchInput) {
+  // Search all results and render in main grid (called on Enter)
+  async function searchAndRenderGrid(query) {
+    if (!query || query.trim().length < 2) return;
+    hideSearchDropdown();
+    // Update section heading
+    const sectionHeading = document.querySelector('.section-title-bar h2');
+    if (sectionHeading) sectionHeading.textContent = 'Search results for "' + query + '"';
+    // Show skeleton grid
+    if (discoverGrid) {
+      discoverGrid.innerHTML = Array(8).fill(0).map(() => '<div class="anime-card skeleton-card"><div class="skeleton skeleton-poster"></div><div class="anime-card-info"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-meta"></div></div></div>').join('');
+    }
+    // Switch to discover tab if not already there
+    const discoverTab = document.getElementById('tab-discover');
+    if (discoverTab && !discoverTab.classList.contains('active')) switchTab('discover');
+    // Fetch results
+    const results = await searchAnimeQuery(query);
+    if (results && results.length > 0) {
+      renderAnimeGrid(results);
+      showToast(results.length + ' results for "' + query + '"', 'success');
+    } else {
+      discoverGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)">No results found for &ldquo;' + query + '&rdquo;</div>';
+    }
+    // Add reset button to heading
+    if (sectionHeading) {
+      sectionHeading.innerHTML = 'Search: <em>' + query + '</em> <button onclick="location.reload()" style="font-size:0.7rem;background:rgba(255,255,255,0.08);border:1px solid var(--border-glass);color:var(--text-muted);border-radius:6px;padding:3px 10px;cursor:pointer;margin-left:10px;font-family:var(--font-body)">✕ Clear</button>';
+    }
+  }
+
+    if (searchInput) {
     searchInput.addEventListener('keydown', (e) => {
       const items = getSearchItems();
       if (!searchDropdown?.classList.contains('active') || items.length === 0) return;
@@ -2691,10 +2719,14 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightSearchItem(searchHighlightIndex);
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        // If nothing highlighted, fall back to first result
-        const targetIndex = searchHighlightIndex >= 0 ? searchHighlightIndex : 0;
-        if (items[targetIndex]) {
-          items[targetIndex].click();
+        if (searchHighlightIndex >= 0 && items[searchHighlightIndex]) {
+          // User navigated to a specific result with arrows → open its detail
+          items[searchHighlightIndex].click();
+          searchHighlightIndex = -1;
+        } else {
+          // No arrow navigation → run full search, show ALL results in main grid
+          const query = searchInput.value.trim();
+          if (query) searchAndRenderGrid(query);
           searchHighlightIndex = -1;
         }
       } else if (e.key === 'Escape') {
