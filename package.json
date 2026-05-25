@@ -1,29 +1,29 @@
 {
-  "name": "japafan",
-  "version": "1.0.0",
-  "description": "Premium Anime Fan Hub with MAL API Integration",
-  "main": "index.html",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "keywords": [
-    "anime",
-    "otaku",
-    "tier-list",
-    "mal-api",
-    "matchmaker"
-  ],
-  "author": "Antigravity",
-  "license": "ISC",
-  "devDependencies": {
-    "vite": "^5.2.0"
-  },
-  "dependencies": {
-    "aos": "^2.3.4",
-    "gsap": "^3.15.0",
-    "tsparticles": "^4.0.5",
-    "tsparticles-slim": "^2.12.0"
-  }
+    "name":  "japafan",
+    "version":  "2.0.0",
+    "description":  "Premium Anime Fan Hub with MAL API Integration",
+    "main":  "index.html",
+    "scripts":  {
+                    "dev":  "vite",
+                    "build":  "vite build",
+                    "preview":  "vite preview"
+                },
+    "keywords":  [
+                     "anime",
+                     "otaku",
+                     "tier-list",
+                     "mal-api",
+                     "matchmaker"
+                 ],
+    "author":  "Antigravity",
+    "license":  "ISC",
+    "devDependencies":  {
+                            "vite":  "^5.2.0"
+                        },
+    "dependencies":  {
+                         "aos":  "^2.3.4",
+                         "gsap":  "^3.15.0",
+                         "tsparticles":  "^4.0.5",
+                         "tsparticles-slim":  "^2.12.0"
+                     }
 }
