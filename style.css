@@ -2686,3 +2686,319 @@ select:focus {
 }
 
 .search-result-item.keyboard-highlighted { background: rgba(0, 240, 255, 0.1) !important; border-left: 3px solid var(--neon-cyan) !important; padding-left: 13px !important; }
+
+/* ========================================================================== */
+/* PHASE 2 — SKELETON LOADERS                                                 */
+/* ========================================================================== */
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    rgba(255,255,255,0.06) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-poster {
+  width: 100%;
+  height: 200px;
+  border-radius: 10px 10px 0 0;
+}
+
+.skeleton-title {
+  height: 14px;
+  width: 80%;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.skeleton-meta {
+  height: 11px;
+  width: 55%;
+  border-radius: 4px;
+}
+
+/* ========================================================================== */
+/* PHASE 2 — UPGRADED ANIME CARDS WITH HOVER OVERLAY                         */
+/* ========================================================================== */
+
+.anime-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Rank badge top-left */
+.anime-card-badge-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(138, 43, 226, 0.85);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  letter-spacing: 0.03em;
+}
+
+/* Type pill and genres on card */
+.card-type-pill {
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--neon-cyan);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.card-genres-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.card-genre-tag {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}
+
+/* Hover overlay — slides up from bottom */
+.anime-card-hover-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    to top,
+    rgba(10, 8, 21, 0.98) 0%,
+    rgba(10, 8, 21, 0.92) 70%,
+    transparent 100%
+  );
+  padding: 16px 12px 12px;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.anime-card:hover .anime-card-hover-overlay {
+  transform: translateY(0);
+}
+
+.card-synopsis-preview {
+  font-size: 0.72rem;
+  color: rgba(245, 245, 250, 0.8);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-hover-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.hover-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.15s ease;
+  font-family: var(--font-body);
+}
+
+.hover-action-btn.view-details-btn {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.35);
+  color: var(--neon-cyan);
+}
+.hover-action-btn.view-details-btn:hover {
+  background: rgba(0, 240, 255, 0.22);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+.hover-action-btn.shelf-btn {
+  background: rgba(255, 0, 127, 0.1);
+  border-color: rgba(255, 0, 127, 0.35);
+  color: var(--neon-pink);
+}
+.hover-action-btn.shelf-btn:hover {
+  background: rgba(255, 0, 127, 0.22);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.25);
+}
+
+/* Remove old action overlay */
+.anime-card-action-overlay { display: none; }
+
+/* ========================================================================== */
+/* PHASE 2 — RICH SEARCH RESULT CARDS                                        */
+/* ========================================================================== */
+
+.search-result-poster {
+  width: 42px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.search-result-row2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.search-result-row3 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.search-type-pill {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--neon-cyan);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  letter-spacing: 0.04em;
+}
+
+.search-eps, .search-year {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.search-genre-tag {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}
+
+.search-score-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+/* ========================================================================== */
+/* PHASE 2 — EMPTY STATES                                                    */
+/* ========================================================================== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 12px;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  line-height: 1;
+  filter: grayscale(0.3);
+}
+
+.empty-state-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.empty-state-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+.empty-state-cta {
+  margin-top: 8px;
+  padding: 9px 22px;
+  border-radius: 20px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--neon-cyan);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+.empty-state-cta:hover {
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+/* ========================================================================== */
+/* PHASE 2 — CHAT SCROLL-TO-BOTTOM BUTTON                                    */
+/* ========================================================================== */
+
+.chat-scroll-bottom {
+  position: absolute;
+  bottom: 70px;
+  right: 16px;
+  background: var(--bg-glass-heavy);
+  border: 1px solid var(--border-neon-cyan);
+  color: var(--neon-cyan);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  z-index: 10;
+  font-family: var(--font-body);
+}
+.chat-scroll-bottom.visible {
+  display: flex;
+}
+.chat-scroll-bottom:hover {
+  background: rgba(0, 240, 255, 0.15);
+  transform: translateY(-2px);
+}

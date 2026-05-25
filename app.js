@@ -36,6 +36,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
+  // 0B. UTILITY: RELATIVE TIMESTAMPS
+  // ==========================================================================
+
+  /**
+   * timeAgo — Returns human-readable relative timestamp.
+   * "just now" / "5m ago" / "3h ago" / "2 days ago" / "May 12"
+   */
+  function timeAgo(date) {
+    const now = Date.now();
+    const d   = date instanceof Date ? date : new Date(date);
+    const sec = Math.floor((now - d.getTime()) / 1000);
+    if (sec < 60)               return 'just now';
+    if (sec < 3600)             return `${Math.floor(sec / 60)}m ago`;
+    if (sec < 86400)            return `${Math.floor(sec / 3600)}h ago`;
+    if (sec < 604800)           return `${Math.floor(sec / 86400)} days ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // ==========================================================================
   // 1. DATA STATE & CONFIGURATION
   // ==========================================================================
 
@@ -629,8 +648,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fetch seasonal trending anime (uses robust caching and local fallback)
   async function fetchTrendingAnime(filter = 'all') {
-    if (catalogLoader) catalogLoader.style.display = 'flex';
-    if (discoverGrid) discoverGrid.innerHTML = '';
+    // Show skeleton loading grid instead of blank+spinner
+    if (catalogLoader) catalogLoader.style.display = 'none';
+    if (discoverGrid) {
+      discoverGrid.innerHTML = Array(12).fill(0).map(() => `
+        <div class="anime-card skeleton-card">
+          <div class="skeleton skeleton-poster"></div>
+          <div class="anime-card-info">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-meta"></div>
+          </div>
+        </div>`).join('');
+    }
     
     const cacheKey = `trending_${filter}`;
     if (state.apiCache[cacheKey]) {
@@ -741,21 +770,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const eps = anime.episodes ? `${anime.episodes} eps` : 'Ongoing';
       const poster = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || '';
 
+      const genres = anime.genres?.slice(0, 2).map(g => `<span class="card-genre-tag">${g.name}</span>`).join('') || '';
+      const synopsis = anime.synopsis ? anime.synopsis.substring(0, 110) + '...' : 'No synopsis available.';
+      const rank = anime.rank ? `#${anime.rank}` : '';
       card.innerHTML = `
         <div class="anime-card-poster">
           <img src="${poster}" alt="${anime.title}" loading="lazy">
           <div class="anime-card-badge-score">${score}</div>
+          ${rank ? `<div class="anime-card-badge-rank">${rank}</div>` : ''}
         </div>
         <div class="anime-card-info">
           <h3 class="anime-card-title">${anime.title}</h3>
           <div class="anime-card-meta">
-            <span>${type}</span>
+            <span class="card-type-pill">${type}</span>
             <span>${eps}</span>
           </div>
+          <div class="card-genres-row">${genres}</div>
         </div>
-        <div class="anime-card-action-overlay">
-          <button class="small-action-btn view-details-btn">Details</button>
-          <button class="small-action-btn shelf-btn">Add to Rank</button>
+        <div class="anime-card-hover-overlay">
+          <p class="card-synopsis-preview">${synopsis}</p>
+          <div class="card-hover-actions">
+            <button class="hover-action-btn view-details-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Details
+            </button>
+            <button class="hover-action-btn shelf-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add to Rank
+            </button>
+          </div>
         </div>
       `;
 
@@ -1790,11 +1833,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const year = anime.year ? `, ${anime.year}` : '';
       const type = anime.type || 'TV';
 
+      const scoreColor = anime.score >= 8 ? 'var(--neon-green)' : anime.score >= 6 ? 'var(--neon-yellow)' : 'var(--text-muted)';
+      const animeGenres = anime.genres?.slice(0, 2).map(g => `<span class="search-genre-tag">${g.name}</span>`).join('') || '';
       item.innerHTML = `
-        <img src="${poster}" alt="${anime.title}">
+        <img src="${poster}" alt="${anime.title}" class="search-result-poster">
         <div class="search-result-info">
           <span class="search-result-title">${anime.title}</span>
-          <span class="search-result-meta">${type}${year} | MAL Score: ${anime.score || 'N/A'}</span>
+          <div class="search-result-row2">
+            <span class="search-type-pill">${type}</span>
+            ${anime.episodes ? `<span class="search-eps">${anime.episodes} eps</span>` : ''}
+            ${year ? `<span class="search-year">${anime.year}</span>` : ''}
+          </div>
+          <div class="search-result-row3">
+            ${animeGenres}
+            ${anime.score ? `<span class="search-score-badge" style="color:${scoreColor}">★ ${anime.score}</span>` : ''}
+          </div>
         </div>
       `;
 
@@ -2517,6 +2570,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.body.appendChild(badge);
     badge.addEventListener('animationend', () => badge.remove());
+  }
+
+
+  // ==========================================================================
+  // PHASE 2 - CHAT SCROLL-TO-BOTTOM + EMPTY STATES
+  // ==========================================================================
+
+  const chatScrollBottomBtn = document.getElementById('chat-scroll-bottom-btn');
+
+  function scrollChatToBottom(smooth) {
+    var stream = document.getElementById('chat-messages-stream');
+    if (!stream) return;
+    stream.scrollTo({ top: stream.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
+  }
+
+  if (chatScrollBottomBtn) {
+    var chatStream = document.getElementById('chat-messages-stream');
+    if (chatStream) {
+      chatStream.addEventListener('scroll', function() {
+        var distFromBottom = chatStream.scrollHeight - chatStream.scrollTop - chatStream.clientHeight;
+        chatScrollBottomBtn.classList.toggle('visible', distFromBottom > 120);
+      });
+    }
+    chatScrollBottomBtn.addEventListener('click', function() {
+      scrollChatToBottom(true);
+      chatScrollBottomBtn.classList.remove('visible');
+    });
+  }
+
+  function createEmptyState(icon, title, sub, ctaText, ctaAction) {
+    var div = document.createElement('div');
+    div.className = 'empty-state';
+    div.innerHTML = '<div class="empty-state-icon">' + icon + '</div>' +
+      '<div class="empty-state-title">' + title + '</div>' +
+      '<p class="empty-state-sub">' + sub + '</p>' +
+      (ctaText ? '<button class="empty-state-cta empty-state-cta-js">' + ctaText + '</button>' : '');
+    if (ctaText && ctaAction) {
+      setTimeout(function() {
+        var btn = div.querySelector('.empty-state-cta-js');
+        if (btn) btn.addEventListener('click', ctaAction);
+      }, 0);
+    }
+    return div;
   }
 
 });
