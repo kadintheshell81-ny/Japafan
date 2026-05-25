@@ -407,33 +407,52 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. HELPER UTILITIES & UI ALERTS
   // ==========================================================================
 
-  // Displays a beautiful glowing cyber toast alert
+  // Rich toast notification system with icons, types, close button
+  const TOAST_ICONS = { success: '✓', error: '✕', warning: '⚠', info: '⚡', xp: '⚡' };
+  const TOAST_DURATIONS = { success: 3000, error: 5000, warning: 0, info: 3500, xp: 2500 };
+
   function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast-message ${type}`;
-    
-    // Build toast safely without innerHTML to prevent XSS
-    const iconSpan = document.createElement('span');
-    if (type === 'success') {
-      iconSpan.style.color = 'var(--neon-green)';
-      iconSpan.textContent = '✓';
-    } else {
-      iconSpan.style.color = 'var(--neon-cyan)';
-      iconSpan.textContent = '⚡';
+    if (!toastContainer) return;
+
+    // Cap at 3 visible toasts
+    while (toastContainer.children.length >= 3) {
+      toastContainer.firstChild.remove();
     }
-    const msgSpan = document.createElement('span');
-    safeText(msgSpan, message);
-    toast.appendChild(iconSpan);
-    toast.appendChild(document.createTextNode(' '));
-    toast.appendChild(msgSpan);
+
+    const toast = document.createElement('div');
+    toast.className = `toast-message toast-${type}`;
+
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.textContent = TOAST_ICONS[type] || '⚡';
+
+    const msg = document.createElement('span');
+    msg.className = 'toast-text';
+    safeText(msg, message);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.textContent = '×';
+    closeBtn.setAttribute('aria-label', 'Dismiss');
+
+    toast.appendChild(icon);
+    toast.appendChild(msg);
+    toast.appendChild(closeBtn);
     toastContainer.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
-      toast.style.transition = 'all 0.3s ease';
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
+
+    // Animate in
+    requestAnimationFrame(() => toast.classList.add('toast-visible'));
+
+    function dismiss() {
+      toast.classList.remove('toast-visible');
+      toast.classList.add('toast-exit');
+      setTimeout(() => toast.remove(), 350);
+    }
+
+    closeBtn.addEventListener('click', dismiss);
+
+    const duration = TOAST_DURATIONS[type];
+    if (duration > 0) setTimeout(dismiss, duration);
   }
 
   // Update overall profile visual indicators globally
@@ -482,10 +501,12 @@ document.addEventListener('DOMContentLoaded', () => {
     state.user.level = `Lv.${newLevel} ${getLevelTitle(newLevel)}`;
     saveState();
     
-    showToast(`Earned +${amount} Otaku XP!`, "success");
-    
+    // XP float badge animation
+    showXPFloat(amount);
+
     renderXPProgress();
     updateGlobalProfileUI();
+    syncDropdown();
     
     if (newLevel > oldLevel) {
       showToast(`LEVEL UP! You are now a ${state.user.level}! 🎉`, "success");
@@ -925,7 +946,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         item.querySelector('.ranked-item-remove').addEventListener('click', (e) => {
           e.stopPropagation();
-          removeAnimeFromRank(rank);
+          const btn = e.currentTarget;
+          if (btn.dataset.confirming === 'true') {
+            removeAnimeFromRank(rank);
+            btn.dataset.confirming = 'false';
+            btn.textContent = '\u00D7';
+            btn.classList.remove('confirm-danger');
+          } else {
+            btn.dataset.confirming = 'true';
+            btn.textContent = 'Sure?';
+            btn.classList.add('confirm-danger');
+            setTimeout(() => {
+              btn.dataset.confirming = 'false';
+              btn.textContent = '\u00D7';
+              btn.classList.remove('confirm-danger');
+            }, 2500);
+          }
         });
 
         item.addEventListener('dragstart', (e) => {
@@ -970,6 +1006,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderInventoryShelf();
     
     showToast(`Ranked ${anime.title} as your Top #${targetRank}!`, "success");
+    // Pulse the drop zone briefly
+    const dz = document.getElementById(`dz-${targetRank}`);
+    if (dz) { dz.classList.add('rank-pulse'); setTimeout(() => dz.classList.remove('rank-pulse'), 600); }
     logActivity(`You ranked <strong>${anime.title}</strong> as your absolute #${targetRank}!`);
     gainXP(15);
   }
@@ -1745,12 +1784,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Body content tabs
+    // Body content tabs — smooth fade transition
+    const outgoing = document.querySelector('.tab-content.active');
+    if (outgoing && outgoing.id !== `tab-${tabId}`) {
+      outgoing.classList.add('tab-fade-out');
+      setTimeout(() => { outgoing.classList.remove('active', 'tab-fade-out'); }, 160);
+    }
     tabContents.forEach(content => {
       const cid = content.id.replace('tab-', '');
       if (cid === tabId) {
-        content.classList.add('active');
-      } else {
+        setTimeout(() => content.classList.add('active'), outgoing ? 160 : 0);
+      } else if (content !== outgoing) {
         content.classList.remove('active');
       }
     });
@@ -2614,5 +2658,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return div;
   }
+
+
+  // ==========================================================================
+  // PHASE 3 — MICRO-INTERACTIONS & POLISH
+  // ==========================================================================
+
+  // '/' keyboard shortcut focuses search from anywhere
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      var si = document.getElementById('anime-search-input');
+      if (si) { si.focus(); switchTab('discover'); }
+    }
+  });
+
+  // Level-up visual flash on profile area
+  var _origGainXP_levelup = gainXP;
+  function triggerLevelUpEffect() {
+    var wrapper = document.getElementById('profile-dropdown-wrapper') || document.querySelector('.app-header');
+    if (wrapper) {
+      wrapper.classList.add('levelup-flash');
+      setTimeout(function() { wrapper.classList.remove('levelup-flash'); }, 800);
+    }
+  }
+
+  // Add / hint span inside search bar
+  (function() {
+    var sbc = document.querySelector('.search-bar-container');
+    if (sbc && !sbc.querySelector('.search-slash-hint')) {
+      var hint = document.createElement('span');
+      hint.className = 'search-slash-hint';
+      hint.textContent = '/';
+      hint.title = 'Press / to search';
+      sbc.appendChild(hint);
+    }
+  })();
 
 });

@@ -3002,3 +3002,259 @@ select:focus {
   background: rgba(0, 240, 255, 0.15);
   transform: translateY(-2px);
 }
+
+/* ========================================================================== */
+/* PHASE 3 — RICH TOAST NOTIFICATION SYSTEM                                   */
+/* ========================================================================== */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 360px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-glass-heavy);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-left: 4px solid var(--neon-cyan);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  pointer-events: all;
+  opacity: 0;
+  transform: translateX(24px) scale(0.97);
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.toast-message.toast-visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.toast-message.toast-exit {
+  opacity: 0;
+  transform: translateX(24px) scale(0.95);
+}
+
+/* Type-specific left border colours */
+.toast-success { border-left-color: #22c55e; }
+.toast-error   { border-left-color: #ef4444; }
+.toast-warning { border-left-color: #f59e0b; }
+.toast-info    { border-left-color: var(--neon-cyan); }
+.toast-xp      { border-left-color: var(--neon-purple); }
+
+.toast-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+.toast-success .toast-icon { color: #22c55e; }
+.toast-error   .toast-icon { color: #ef4444; }
+.toast-warning .toast-icon { color: #f59e0b; }
+.toast-info    .toast-icon { color: var(--neon-cyan); }
+.toast-xp      .toast-icon { color: var(--neon-purple); }
+
+.toast-text {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.toast-close:hover { color: var(--text-main); }
+
+/* ========================================================================== */
+/* PHASE 3 — DESTRUCTIVE CONFIRM BUTTON                                       */
+/* ========================================================================== */
+
+.ranked-item-remove {
+  transition: all 0.2s ease;
+}
+
+.ranked-item-remove.confirm-danger {
+  background: rgba(239, 68, 68, 0.9) !important;
+  color: #fff !important;
+  font-size: 0.6rem !important;
+  font-weight: 700 !important;
+  padding: 3px 7px !important;
+  border-radius: 4px !important;
+  letter-spacing: 0.03em;
+  animation: danger-pulse 0.5s ease;
+}
+
+@keyframes danger-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ========================================================================== */
+/* PHASE 3 — SMOOTH TAB FADE TRANSITIONS                                      */
+/* ========================================================================== */
+
+.tab-content {
+  animation: tab-fade-in 0.22s ease forwards;
+}
+
+@keyframes tab-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tab-fade-out {
+  animation: tab-fade-out 0.16s ease forwards !important;
+  pointer-events: none;
+}
+
+@keyframes tab-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ========================================================================== */
+/* PHASE 3 — RANK DROP ZONE PULSE ANIMATION                                   */
+/* ========================================================================== */
+
+@keyframes rank-pulse-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.5); }
+  50%  { box-shadow: 0 0 0 12px rgba(0, 240, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+}
+
+.rank-pulse {
+  animation: rank-pulse-glow 0.6s ease forwards;
+}
+
+/* ========================================================================== */
+/* PHASE 3 — BUTTON MICRO-ANIMATIONS                                          */
+/* ========================================================================== */
+
+.glass-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.18) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.glass-btn:active::after {
+  opacity: 1;
+}
+
+.glass-btn:active {
+  transform: scale(0.96);
+  transition: transform 0.1s ease;
+}
+
+/* Nav tab micro-animation on click */
+.nav-tab {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--neon-cyan);
+  transition: width 0.25s ease, left 0.25s ease;
+  border-radius: 2px;
+}
+
+.nav-tab.active::after {
+  width: 100%;
+  left: 0;
+}
+
+/* ========================================================================== */
+/* PHASE 3 — IMPROVED ANIME CARD HOVER LIFT                                   */
+/* ========================================================================== */
+
+.anime-card {
+  transition: transform 0.22s cubic-bezier(0.25, 0.8, 0.25, 1),
+              box-shadow 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+  will-change: transform;
+}
+
+.anime-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 20px rgba(0, 240, 255, 0.08);
+}
+
+/* ========================================================================== */
+/* PHASE 3 — LEVEL UP CELEBRATION FLASH                                       */
+/* ========================================================================== */
+
+@keyframes levelup-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.7); }
+  50%  { box-shadow: 0 0 0 20px rgba(138, 43, 226, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(138, 43, 226, 0); }
+}
+
+.levelup-flash {
+  animation: levelup-flash 0.8s ease forwards;
+}
+
+/* ========================================================================== */
+/* PHASE 3 — SLASH KEYBOARD SHORTCUT HINT IN SEARCH                          */
+/* ========================================================================== */
+
+.search-bar-container {
+  position: relative;
+}
+
+.search-slash-hint {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border-glass);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.2s;
+  font-family: monospace;
+}
+
+.search-bar-container:focus-within .search-slash-hint {
+  opacity: 0;
+}
