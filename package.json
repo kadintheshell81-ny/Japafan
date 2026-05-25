@@ -19,5 +19,11 @@
   "license": "ISC",
   "devDependencies": {
     "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "aos": "^2.3.4",
+    "gsap": "^3.15.0",
+    "tsparticles": "^4.0.5",
+    "tsparticles-slim": "^2.12.0"
   }
 }

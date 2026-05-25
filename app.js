@@ -1,5 +1,17 @@
 ﻿import { supabaseService } from './supabase-client.js';
 
+import {
+  initAOS,
+  animateCardGrid,
+  animateHeroEntrance,
+  initCardTilt,
+  initScrollRevealSections,
+  initStarfield,
+  animateTabSwitch,
+  pulseElement,
+} from './src/animations.js';
+
+
 /* ==========================================================================
    JAPAFAN APPLICATION ENGINE
    ========================================================================== */
@@ -34,6 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
       timer = setTimeout(() => fn.apply(this, args), delay);
     };
   }
+
+  // ==========================================================================
+  // 0A. ANIMATION INIT (Runs on first load)
+  // ==========================================================================
+
+  // Init AOS scroll reveals (all data-aos elements)
+  initAOS();
+
+  // Starfield particles on hero
+  initStarfield('hero-particles');
+
+  // Hero text entrance sequence
+  setTimeout(() => animateHeroEntrance(), 100);
+
+  // Section heading scroll reveals
+  setTimeout(() => initScrollRevealSections(), 200);
 
   // ==========================================================================
   // 0B. UTILITY: RELATIVE TIMESTAMPS
@@ -840,6 +868,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       discoverGrid.appendChild(card);
     });
+
+    // Animate grid entrance + wire tilt on newly rendered cards
+    animateCardGrid('.anime-card');
+    initCardTilt('.anime-card');
   }
 
   // Adds an anime to the quick rank inventory board
@@ -1793,7 +1825,10 @@ document.addEventListener('DOMContentLoaded', () => {
     tabContents.forEach(content => {
       const cid = content.id.replace('tab-', '');
       if (cid === tabId) {
-        setTimeout(() => content.classList.add('active'), outgoing ? 160 : 0);
+        setTimeout(() => {
+          content.classList.add('active');
+          animateTabSwitch(content);
+        }, outgoing ? 160 : 0);
       } else if (content !== outgoing) {
         content.classList.remove('active');
       }
