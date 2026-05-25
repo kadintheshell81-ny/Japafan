@@ -2553,91 +2553,165 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTierList();
   renderInventoryShelf();
 
+
   // ==========================================================================
-  // v2.1.0 — ANIME & MANGA NEWS SECTION (ANN via rss2json.com)
+  // v2.2.0 — NEWS PANEL (slide-in, multi-source, thumbnail fix)
   // ==========================================================================
 
-  const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=' +
-    encodeURIComponent('https://www.animenewsnetwork.com/news/rss.xml') + '&count=10';
+  const NEWS_SOURCES = {
+    ann: {
+      label: 'Anime News Network',
+      rss:   'https://www.animenewsnetwork.com/news/rss.xml',
+    },
+    mal: {
+      label: 'MyAnimeList',
+      rss:   'https://myanimelist.net/rss/news.xml',
+    },
+  };
 
-  async function fetchAnimeNews() {
-    // Client-side cache: 15 min TTL
-    if (state.newsCache && state.newsCachedAt) {
-      const age = Date.now() - state.newsCachedAt;
-      if (age < 15 * 60 * 1000) {
-        renderNewsSection(state.newsCache);
-        return;
-      }
-    }
+  // Cache per source: { ann: { items, cachedAt }, mal: {...} }
+  if (!state.newsCache)   state.newsCache   = {};
+  if (!state.newsSource)  state.newsSource  = 'ann';
 
-    try {
-      const res = await fetch(RSS2JSON_URL);
-      if (!res.ok) throw new Error('rss2json error ' + res.status);
-      const json = await res.json();
-      if (json.status !== 'ok' || !json.items?.length) throw new Error('Empty feed');
+  const newsPanelEl    = document.getElementById('news-panel');
+  const newsBackdropEl = document.getElementById('news-backdrop');
+  const newsPanelList  = document.getElementById('news-panel-list');
+  const newsPanelBtn   = document.getElementById('news-panel-btn');
+  const newsPanelClose = document.getElementById('news-panel-close');
+  const newsTabBtns    = document.querySelectorAll('.news-tab-btn');
 
-      state.newsCache   = json.items;
-      state.newsCachedAt = Date.now();
-      renderNewsSection(json.items);
-    } catch (err) {
-      console.warn('[News] Feed unavailable:', err.message);
-      renderNewsError();
-    }
+  // ── Thumbnail extraction (rss2json thumbnail field is often empty for ANN)
+  function extractNewsThumbnail(item) {
+    if (item.thumbnail && item.thumbnail.startsWith('http')) return item.thumbnail;
+    const m = (item.description || item.content || '').match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (m && m[1].startsWith('http')) return m[1];
+    if (item.enclosure && item.enclosure.link) return item.enclosure.link;
+    return null;
   }
 
-  function stripHtml(html) {
+  // ── Fetch one source via rss2json
+  async function fetchNewsSource(sourceKey) {
+    const cache = state.newsCache[sourceKey];
+    if (cache && (Date.now() - cache.cachedAt) < 15 * 60 * 1000) {
+      return cache.items;
+    }
+    const rssUrl = NEWS_SOURCES[sourceKey].rss;
+    const apiUrl = 'https://api.rss2json.com/v1/api.json?count=12&rss_url=' + encodeURIComponent(rssUrl);
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error('rss2json ' + res.status);
+    const json = await res.json();
+    if (json.status !== 'ok' || !json.items?.length) throw new Error('Empty feed');
+    state.newsCache[sourceKey] = { items: json.items, cachedAt: Date.now() };
+    return json.items;
+  }
+
+  // ── Strip HTML tags for excerpt
+  function stripNewsHtml(html) {
     const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
+    tmp.innerHTML = html || '';
+    return (tmp.textContent || tmp.innerText || '').trim();
   }
 
   function formatNewsDate(dateStr) {
     try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     } catch { return ''; }
   }
 
-  function renderNewsSection(items) {
-    const grid = document.getElementById('news-grid');
-    if (!grid) return;
-
-    grid.innerHTML = items.map(item => {
-      const title   = item.title   || 'Untitled';
-      const url     = item.link    || '#';
+  // ── Render list into panel
+  function renderNewsPanelList(items) {
+    if (!newsPanelList) return;
+    if (!items || !items.length) {
+      newsPanelList.innerHTML = '<div class="news-panel-empty"><span>📰</span><p>No articles found.</p></div>';
+      return;
+    }
+    newsPanelList.innerHTML = items.map(item => {
+      const thumb   = extractNewsThumbnail(item);
+      const title   = item.title || 'Untitled';
+      const url     = item.link  || '#';
       const date    = formatNewsDate(item.pubDate);
-      const thumb   = item.thumbnail || '';
-      const excerpt = stripHtml(item.description || '').slice(0, 180).trim();
+      const excerpt = stripNewsHtml(item.description).slice(0, 120);
 
-      const imgBlock = thumb
-        ? `<img class="news-card-img" src="${thumb}" alt="${title.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=news-card-img-fallback>🎌</div>'">`
-        : `<div class="news-card-img-fallback">🎌</div>`;
+      const imgHtml = thumb
+        ? `<img class="news-pitem-img" src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
+        : '';
+      const fallbackHtml = `<div class="news-pitem-fallback" style="${thumb ? 'display:none' : ''}">🎌</div>`;
 
       return `
-        <a class="news-card" href="${url}" target="_blank" rel="noopener noreferrer" title="${title.replace(/"/g, '&quot;')}">
-          <div class="news-card-img-wrap">
-            ${imgBlock}
+        <a class="news-pitem" href="${url}" target="_blank" rel="noopener noreferrer">
+          <div class="news-pitem-thumb">
+            ${imgHtml}${fallbackHtml}
           </div>
-          <div class="news-card-body">
-            <span class="news-card-meta">ANN · ${date}</span>
-            <p class="news-card-title">${title}</p>
-            ${excerpt ? `<p class="news-card-excerpt">${excerpt}</p>` : ''}
+          <div class="news-pitem-body">
+            <span class="news-pitem-date">${date}</span>
+            <p class="news-pitem-title">${title}</p>
+            ${excerpt ? `<p class="news-pitem-excerpt">${excerpt}</p>` : ''}
           </div>
         </a>`;
     }).join('');
   }
 
-  function renderNewsError() {
-    const grid = document.getElementById('news-grid');
-    if (grid) grid.innerHTML = `
-      <div class="news-error-state">
-        <span style="font-size:2rem">📰</span>
-        <p>Could not load news right now.<br><a href="https://www.animenewsnetwork.com" target="_blank" rel="noopener noreferrer" style="color:var(--neon-cyan)">Visit ANN directly →</a></p>
-      </div>`;
+  function showNewsPanelSkeleton() {
+    if (!newsPanelList) return;
+    newsPanelList.innerHTML = Array(6).fill(0).map(() => `
+      <div class="news-pitem news-pitem-skeleton">
+        <div class="news-pitem-thumb skeleton"></div>
+        <div class="news-pitem-body">
+          <div class="skeleton" style="width:50%;height:9px;margin-bottom:8px;border-radius:4px;"></div>
+          <div class="skeleton" style="width:90%;height:13px;margin-bottom:5px;border-radius:4px;"></div>
+          <div class="skeleton" style="width:75%;height:9px;border-radius:4px;"></div>
+        </div>
+      </div>`).join('');
   }
 
-  // Trigger news fetch after trending anime loads
-  fetchAnimeNews();
+  async function loadNewsForSource(sourceKey) {
+    state.newsSource = sourceKey;
+    showNewsPanelSkeleton();
+    try {
+      const items = await fetchNewsSource(sourceKey);
+      renderNewsPanelList(items);
+    } catch (err) {
+      console.warn('[News]', err.message);
+      if (newsPanelList) newsPanelList.innerHTML = `
+        <div class="news-panel-empty">
+          <span>📰</span>
+          <p>Could not load news.<br>
+          <a href="${NEWS_SOURCES[sourceKey].rss.replace('/rss.xml','').replace('rss.xml','')}"
+             target="_blank" rel="noopener" style="color:var(--neon-cyan)">Visit directly →</a></p>
+        </div>`;
+    }
+  }
+
+  // ── Panel open / close
+  function openNewsPanel() {
+    if (!newsPanelEl) return;
+    newsPanelEl.classList.add('open');
+    newsBackdropEl?.classList.add('open');
+    newsPanelEl.setAttribute('aria-hidden', 'false');
+    loadNewsForSource(state.newsSource);
+  }
+
+  function closeNewsPanel() {
+    if (!newsPanelEl) return;
+    newsPanelEl.classList.remove('open');
+    newsBackdropEl?.classList.remove('open');
+    newsPanelEl.setAttribute('aria-hidden', 'true');
+  }
+
+  if (newsPanelBtn)   newsPanelBtn.addEventListener('click',   (e) => { e.stopPropagation(); openNewsPanel(); });
+  if (newsPanelClose) newsPanelClose.addEventListener('click', closeNewsPanel);
+  if (newsBackdropEl) newsBackdropEl.id === 'news-backdrop' && newsBackdropEl.addEventListener('click', closeNewsPanel);
+
+  // Source tab switching
+  newsTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      newsTabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadNewsForSource(btn.dataset.source);
+    });
+  });
+
+
 
 
 

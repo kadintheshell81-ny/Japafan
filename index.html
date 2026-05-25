@@ -70,7 +70,13 @@
       <div class="header-actions" style="display: flex; gap: 10px; align-items: center; position: relative;">
 
         <!-- Notification Bell -->
-        <div class="notif-bell-wrapper" id="notif-bell-wrapper">
+        <button class="news-panel-btn" id="news-panel-btn" aria-label="News" title="Anime &amp; Manga News">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+              <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8z"/>
+            </svg>
+          </button>
+          <div class="notif-bell-wrapper" id="notif-bell-wrapper">
           <button class="notif-bell-btn" id="notif-bell-btn" aria-label="Notifications" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -207,54 +213,7 @@
           </aside>
         </div>
 
-        <!-- ================================================================ -->
-        <!-- NEWS SECTION                                                      -->
-        <!-- ================================================================ -->
-        <section class="news-section" id="news-section">
-          <div class="section-title-bar news-title-bar">
-            <h2>Latest Anime &amp; Manga News</h2>
-            <a href="https://www.animenewsnetwork.com" target="_blank" rel="noopener noreferrer" class="news-source-badge">
-              <span>📰</span> Anime News Network
-            </a>
-          </div>
-
-          <!-- Skeleton placeholders shown while loading -->
-          <div class="news-grid" id="news-grid">
-            <div class="news-card news-card-skeleton">
-              <div class="skeleton news-card-img-wrap"></div>
-              <div class="news-card-body">
-                <div class="skeleton skeleton-title" style="width:60%;height:10px;margin-bottom:8px;"></div>
-                <div class="skeleton skeleton-title" style="width:90%;height:14px;margin-bottom:6px;"></div>
-                <div class="skeleton skeleton-meta" style="width:80%;height:10px;"></div>
-              </div>
-            </div>
-            <div class="news-card news-card-skeleton">
-              <div class="skeleton news-card-img-wrap"></div>
-              <div class="news-card-body">
-                <div class="skeleton skeleton-title" style="width:50%;height:10px;margin-bottom:8px;"></div>
-                <div class="skeleton skeleton-title" style="width:85%;height:14px;margin-bottom:6px;"></div>
-                <div class="skeleton skeleton-meta" style="width:75%;height:10px;"></div>
-              </div>
-            </div>
-            <div class="news-card news-card-skeleton">
-              <div class="skeleton news-card-img-wrap"></div>
-              <div class="news-card-body">
-                <div class="skeleton skeleton-title" style="width:55%;height:10px;margin-bottom:8px;"></div>
-                <div class="skeleton skeleton-title" style="width:90%;height:14px;margin-bottom:6px;"></div>
-                <div class="skeleton skeleton-meta" style="width:70%;height:10px;"></div>
-              </div>
-            </div>
-            <div class="news-card news-card-skeleton">
-              <div class="skeleton news-card-img-wrap"></div>
-              <div class="news-card-body">
-                <div class="skeleton skeleton-title" style="width:65%;height:10px;margin-bottom:8px;"></div>
-                <div class="skeleton skeleton-title" style="width:80%;height:14px;margin-bottom:6px;"></div>
-                <div class="skeleton skeleton-meta" style="width:60%;height:10px;"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
+        
       </section>
 
       <!-- Tab 2: Ranker (Top Anime Tier Board) -->
@@ -733,6 +692,25 @@
   <!-- Japafan SPA Engines -->
   <script type="module" src="badge-exporter.js"></script>
   <script type="module" src="app.js"></script>
+  <!-- News Panel -->
+  <div class="news-panel" id="news-panel" aria-hidden="true">
+    <div class="news-panel-header">
+      <h3 class="news-panel-title">📰 Anime &amp; Manga News</h3>
+      <button class="notif-close-btn" id="news-panel-close" aria-label="Close news">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Source tabs -->
+    <div class="news-source-tabs" id="news-source-tabs">
+      <button class="news-tab-btn active" data-source="ann">Anime News Network</button>
+      <button class="news-tab-btn" data-source="mal">MyAnimeList</button>
+    </div>
+    <div class="news-panel-list" id="news-panel-list">
+      <!-- populated by JS -->
+    </div>
+  </div>
+  <div class="notif-backdrop" id="news-backdrop"></div>
+
   <!-- Back to Top -->
   <button class="back-to-top-btn" id="back-to-top-btn" aria-label="Back to top">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="18 15 12 9 6 15"/></svg>

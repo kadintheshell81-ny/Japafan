@@ -1,6 +1,6 @@
 {
     "name":  "japafan",
-    "version":  "2.1.0",
+    "version":  "2.2.0",
     "description":  "Premium Anime Fan Hub with MAL API Integration",
     "main":  "index.html",
     "scripts":  {
