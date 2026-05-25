@@ -1,4 +1,4 @@
-import { supabaseService } from './supabase-client.js';
+﻿import { supabaseService } from './supabase-client.js';
 
 /* ==========================================================================
    JAPAFAN APPLICATION ENGINE
@@ -2138,9 +2138,14 @@ document.addEventListener('DOMContentLoaded', () => {
         state.user.avatarSeed = user.user_metadata?.avatar_seed || `JapaFan-${state.user.username}`;
         state.user.bio = user.user_metadata?.bio || "Cloud Authenticated Otaku // Ranks sync active.";
         
-        // Hide connect cloud, show open profile
-        if (connectCloudBtn) connectCloudBtn.style.display = 'none';
-        if (openProfileBtn) openProfileBtn.style.display = 'flex';
+        // Switch to authenticated header state
+        setAuthState(true);
+        // Update header avatar
+        const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.user.avatarSeed || 'JapaFanUser'}&backgroundColor=ff007f`;
+        const headerAvatar = document.getElementById('header-avatar');
+        const headerUsername = document.getElementById('header-username');
+        if (headerAvatar) headerAvatar.src = avatarUrl;
+        if (headerUsername) headerUsername.textContent = state.user.username;
         
         // Load additional custom profile details from database users table if any
         try {
@@ -2346,5 +2351,172 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchTrendingAnime();
   renderTierList();
   renderInventoryShelf();
+
+
+  // ==========================================================================
+  // PHASE 1 — PROFILE DROPDOWN + LOGOUT + AUTH STATE + KEYBOARD SEARCH
+  // ==========================================================================
+
+  // ── Dropdown refs ──────────────────────────────────────────────────────────
+  const profileDropdownWrapper = document.getElementById('profile-dropdown-wrapper');
+  const profileDropdownTrigger = document.getElementById('profile-dropdown-trigger');
+  const profileDropdownMenu    = document.getElementById('profile-dropdown-menu');
+  const dropdownSignoutBtn     = document.getElementById('dropdown-signout-btn');
+  const dropdownEditProfile    = document.getElementById('dropdown-edit-profile');
+  const dropdownMyRank         = document.getElementById('dropdown-my-rank');
+  const dropdownExportBadge    = document.getElementById('dropdown-export-badge');
+  const dropdownAvatar         = document.getElementById('dropdown-avatar');
+  const dropdownUsername       = document.getElementById('dropdown-username');
+  const dropdownLevel          = document.getElementById('dropdown-level');
+  const dropdownXpCount        = document.getElementById('dropdown-xp-count');
+  const dropdownXpFill         = document.getElementById('dropdown-xp-fill');
+
+  /** Sync dropdown panel data from current state */
+  function syncDropdown() {
+    const xp  = state.user.xp || 0;
+    const pct = ((xp % 100) / 100 * 100).toFixed(0);
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.user.avatarSeed || 'JapaFanUser'}&backgroundColor=ff007f`;
+
+    if (dropdownAvatar)   dropdownAvatar.src = avatarUrl;
+    if (dropdownUsername) dropdownUsername.textContent = state.user.username || 'OtakuFan';
+    if (dropdownLevel)    dropdownLevel.textContent    = state.user.level    || 'Lv.1 Trainee';
+    if (dropdownXpCount)  dropdownXpCount.textContent  = `${xp} XP`;
+    if (dropdownXpFill)   dropdownXpFill.style.width   = `${pct}%`;
+  }
+
+  /** Show/hide header elements based on auth state */
+  function setAuthState(loggedIn) {
+    const connectBtn = document.getElementById('connect-cloud-btn');
+    if (connectBtn)              connectBtn.style.display          = loggedIn ? 'none'  : 'flex';
+    if (profileDropdownWrapper)  profileDropdownWrapper.style.display = loggedIn ? 'flex' : 'none';
+    if (loggedIn) syncDropdown();
+  }
+
+  // Toggle dropdown open/closed
+  if (profileDropdownTrigger) {
+    profileDropdownTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = profileDropdownWrapper.classList.toggle('open');
+      profileDropdownTrigger.setAttribute('aria-expanded', isOpen);
+      if (isOpen) syncDropdown();
+    });
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (profileDropdownWrapper && !profileDropdownWrapper.contains(e.target)) {
+      profileDropdownWrapper.classList.remove('open');
+      if (profileDropdownTrigger) profileDropdownTrigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && profileDropdownWrapper?.classList.contains('open')) {
+      profileDropdownWrapper.classList.remove('open');
+      profileDropdownTrigger?.focus();
+    }
+  });
+
+  // ── Dropdown action buttons ─────────────────────────────────────────────────
+  if (dropdownEditProfile) {
+    dropdownEditProfile.addEventListener('click', () => {
+      profileDropdownWrapper.classList.remove('open');
+      if (profileModal) profileModal.classList.add('active');
+    });
+  }
+  if (dropdownMyRank) {
+    dropdownMyRank.addEventListener('click', () => {
+      profileDropdownWrapper.classList.remove('open');
+      document.querySelector('[data-tab="ranker"]')?.click();
+    });
+  }
+  if (dropdownExportBadge) {
+    dropdownExportBadge.addEventListener('click', () => {
+      profileDropdownWrapper.classList.remove('open');
+      document.getElementById('export-badge-btn')?.click();
+    });
+  }
+
+  // ── Sign Out → Guest Mode (no reload) ──────────────────────────────────────
+  if (dropdownSignoutBtn) {
+    dropdownSignoutBtn.addEventListener('click', async () => {
+      profileDropdownWrapper.classList.remove('open');
+
+      // Sign out from Supabase (non-blocking)
+      if (supabaseService.initialized) {
+        supabaseService.signOut().catch(err => console.warn('Supabase sign out error:', err));
+      }
+
+      // Reset to guest state — preserve XP and username locally
+      state.user.cloudAuthAwarded  = false;
+      state.user.googleAuthAwarded = false;
+      saveState();
+
+      // Switch header back to logged-out state
+      setAuthState(false);
+
+      showToast('Signed out. You\'re now in guest mode.', 'info');
+    });
+  }
+
+  // ── Keyboard navigation for search dropdown ─────────────────────────────────
+  let searchHighlightIndex = -1;
+
+  function getSearchItems() {
+    return searchDropdown ? Array.from(searchDropdown.querySelectorAll('.search-result-item')) : [];
+  }
+
+  function highlightSearchItem(index) {
+    const items = getSearchItems();
+    items.forEach((item, i) => {
+      item.classList.toggle('keyboard-highlighted', i === index);
+      if (i === index) item.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (e) => {
+      const items = getSearchItems();
+      if (!searchDropdown?.classList.contains('active') || items.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        searchHighlightIndex = Math.min(searchHighlightIndex + 1, items.length - 1);
+        highlightSearchItem(searchHighlightIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        searchHighlightIndex = Math.max(searchHighlightIndex - 1, 0);
+        highlightSearchItem(searchHighlightIndex);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (searchHighlightIndex >= 0 && items[searchHighlightIndex]) {
+          items[searchHighlightIndex].click();
+          searchHighlightIndex = -1;
+        }
+      } else if (e.key === 'Escape') {
+        searchDropdown.classList.remove('active');
+        searchHighlightIndex = -1;
+      }
+    });
+
+    // Reset highlight index on new input
+    searchInput.addEventListener('input', () => { searchHighlightIndex = -1; });
+  }
+
+  // ── XP Float Badge ─────────────────────────────────────────────────────────
+  function showXPFloat(amount, anchorEl) {
+    const badge = document.createElement('div');
+    badge.className = 'xp-float-badge';
+    badge.textContent = `+${amount} XP ⚡`;
+
+    // Position near XP bar or header
+    const rect = (anchorEl || document.querySelector('.app-header'))?.getBoundingClientRect();
+    badge.style.left = rect ? `${rect.left + rect.width / 2}px` : '50%';
+    badge.style.top  = rect ? `${rect.top}px` : '80px';
+
+    document.body.appendChild(badge);
+    badge.addEventListener('animationend', () => badge.remove());
+  }
 
 });
