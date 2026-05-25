@@ -1,4 +1,4 @@
-﻿import { supabaseService } from './supabase-client.js';
+import { supabaseService } from './supabase-client.js';
 
 import {
   initAOS,
@@ -2552,6 +2552,93 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchTrendingAnime();
   renderTierList();
   renderInventoryShelf();
+
+  // ==========================================================================
+  // v2.1.0 — ANIME & MANGA NEWS SECTION (ANN via rss2json.com)
+  // ==========================================================================
+
+  const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=' +
+    encodeURIComponent('https://www.animenewsnetwork.com/news/rss.xml') + '&count=10';
+
+  async function fetchAnimeNews() {
+    // Client-side cache: 15 min TTL
+    if (state.newsCache && state.newsCachedAt) {
+      const age = Date.now() - state.newsCachedAt;
+      if (age < 15 * 60 * 1000) {
+        renderNewsSection(state.newsCache);
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch(RSS2JSON_URL);
+      if (!res.ok) throw new Error('rss2json error ' + res.status);
+      const json = await res.json();
+      if (json.status !== 'ok' || !json.items?.length) throw new Error('Empty feed');
+
+      state.newsCache   = json.items;
+      state.newsCachedAt = Date.now();
+      renderNewsSection(json.items);
+    } catch (err) {
+      console.warn('[News] Feed unavailable:', err.message);
+      renderNewsError();
+    }
+  }
+
+  function stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  function formatNewsDate(dateStr) {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch { return ''; }
+  }
+
+  function renderNewsSection(items) {
+    const grid = document.getElementById('news-grid');
+    if (!grid) return;
+
+    grid.innerHTML = items.map(item => {
+      const title   = item.title   || 'Untitled';
+      const url     = item.link    || '#';
+      const date    = formatNewsDate(item.pubDate);
+      const thumb   = item.thumbnail || '';
+      const excerpt = stripHtml(item.description || '').slice(0, 180).trim();
+
+      const imgBlock = thumb
+        ? `<img class="news-card-img" src="${thumb}" alt="${title.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=news-card-img-fallback>🎌</div>'">`
+        : `<div class="news-card-img-fallback">🎌</div>`;
+
+      return `
+        <a class="news-card" href="${url}" target="_blank" rel="noopener noreferrer" title="${title.replace(/"/g, '&quot;')}">
+          <div class="news-card-img-wrap">
+            ${imgBlock}
+          </div>
+          <div class="news-card-body">
+            <span class="news-card-meta">ANN · ${date}</span>
+            <p class="news-card-title">${title}</p>
+            ${excerpt ? `<p class="news-card-excerpt">${excerpt}</p>` : ''}
+          </div>
+        </a>`;
+    }).join('');
+  }
+
+  function renderNewsError() {
+    const grid = document.getElementById('news-grid');
+    if (grid) grid.innerHTML = `
+      <div class="news-error-state">
+        <span style="font-size:2rem">📰</span>
+        <p>Could not load news right now.<br><a href="https://www.animenewsnetwork.com" target="_blank" rel="noopener noreferrer" style="color:var(--neon-cyan)">Visit ANN directly →</a></p>
+      </div>`;
+  }
+
+  // Trigger news fetch after trending anime loads
+  fetchAnimeNews();
+
 
 
   // ==========================================================================
