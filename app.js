@@ -1,4 +1,4 @@
-import { supabaseService } from './supabase-client.js';
+﻿import { supabaseService } from './supabase-client.js';
 
 import {
   initAOS,
@@ -3007,28 +3007,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openNotifPanel() {
     if (!notifPanel) return;
+    // CSS transition handles the slide animation (transform + opacity)
     notifPanel.classList.add('open');
     notifBackdrop.classList.add('open');
     notifBellBtn.setAttribute('aria-expanded', 'true');
     notifPanel.setAttribute('aria-hidden', 'false');
-    // GSAP slide in from right
-    if (typeof gsap !== 'undefined') {
-      gsap.fromTo(notifPanel, { x: 320, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: 'power3.out' });
-    }
     renderNotifications();
   }
 
   function closeNotifPanel() {
     if (!notifPanel) return;
-    if (typeof gsap !== 'undefined') {
-      gsap.to(notifPanel, { x: 320, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => {
-        notifPanel.classList.remove('open');
-        notifBackdrop.classList.remove('open');
-      }});
-    } else {
-      notifPanel.classList.remove('open');
-      notifBackdrop.classList.remove('open');
-    }
+    // Remove open class — CSS transition slides it back out
+    notifPanel.classList.remove('open');
+    notifBackdrop.classList.remove('open');
     notifBellBtn.setAttribute('aria-expanded', 'false');
     notifPanel.setAttribute('aria-hidden', 'true');
   }

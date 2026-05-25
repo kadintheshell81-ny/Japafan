@@ -1,4 +1,4 @@
-/* ==========================================================================
+ï»¿/* ==========================================================================
    JAPAFAN DESIGN SYSTEM - NEON GLASSMORPHISM
    ========================================================================== */
 
@@ -3548,13 +3548,15 @@ select:focus {
   z-index: 9998;
   display: flex;
   flex-direction: column;
-  transform: translateX(320px);
+  transform: translateX(100%);
   opacity: 0;
   pointer-events: none;
-  transition: none;
+  transition: transform 0.32s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.28s ease;
 }
 
 .notif-panel.open {
+  transform: translateX(0);
+  opacity: 1;
   pointer-events: all;
 }
 
@@ -3687,7 +3689,7 @@ select:focus {
 .notif-empty-icon { font-size: 2.5rem; }
 
 /* ========================================================================== */
-/* PHASE 4.5 — FILTER CHIPS WITH ANIMATED SLIDING PILL                        */
+/* PHASE 4.5 ï¿½ FILTER CHIPS WITH ANIMATED SLIDING PILL                        */
 /* ========================================================================== */
 
 .filter-pill-track {
@@ -3735,7 +3737,7 @@ select:focus {
 .filter-pill.active { color: var(--neon-cyan); }
 
 /* ========================================================================== */
-/* PHASE 4.4 — BACK-TO-TOP BUTTON                                             */
+/* PHASE 4.4 ï¿½ BACK-TO-TOP BUTTON                                             */
 /* ========================================================================== */
 
 .back-to-top-btn {
